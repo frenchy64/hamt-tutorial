@@ -1,0 +1,7 @@
+CAUTION: I broke this paper by using luatex.
+It does not play nicely with pgfplots.
+If I get back to fixing it, I should remove
+the plot on the last page, or remove the dependency
+to luatex.
+
+Just press enter when building with Make.
