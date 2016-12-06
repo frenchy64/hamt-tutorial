@@ -969,16 +969,16 @@ significant bit is 1, so the output of a bit-operation
 was wildly incorrect if interpreting the full
 64-bits as an answer.
 
-\paragraph{Abstract classes}
-Clojure provides poor support for 
-extending abstract classes. This meant
-we either had to reimplement the abstract class,
-which was often long, or use proxies, a less
-elegant feature of Clojure.
+%\paragraph{Abstract classes}
+%Clojure provides poor support for 
+%extending abstract classes. This meant
+%we either had to reimplement the abstract class,
+%which was often long, or use proxies, a less
+%elegant feature of Clojure.
+%%
+%We decided to use proxies to save effort, but we think it detracts
+%from the readability of the implementation.
 %
-We decided to use proxies to save effort, but we think it detracts
-from the readability of the implementation.
-
 \paragraph{Mutation}
 Clojure does not expose plain Java variables, so several
 style and performance decisions were made faithfully port
