@@ -1,0 +1,61 @@
+\documentclass[10pt]{article}
+
+\usepackage{amsmath}
+\usepackage[backend=bibtex]{biblatex}
+
+%\setlength{\parindent}{4em}
+%\setlength{\parskip}{1em}
+%\renewcommand{\baselinestretch}{1.5}
+
+\addbibresource{bibliography.bib}
+
+\usepackage[utf8]{inputenc}
+\usepackage[english]{babel}
+\usepackage{enumitem}
+
+\begin{document}
+\title{Optimized Keyword Persistent Hash Maps for Clojure
+\\
+\large
+B503 - Project Proposal}
+\author{Ambrose Bonnaire-Sergeant (0003410123)}
+
+\maketitle
+
+\section*{Background}
+
+Clojure provides a suite of persistent data structures,
+including persistent hash maps.
+The most common use of hash maps are small maps with keyword keys
+(which we refer to as ``keyword maps'').
+They are so important that Typed Clojure, an optional type
+system for Clojure, implements heterogeneous map types
+to represent such keyword maps.
+
+The current hash map implementation is implemented by Hickey
+(described in detail by L'orange~\cite{HyperionBlog1})
+,
+based on previous work by Bagwell~\cite{bagwell2001ideal}
+It uses Hash Array Mapped Tries (HAMT) as its basis.
+It is not optimized for keywords.
+
+I plan to investigate different optimizations to specifically
+target small maps.
+
+\section*{Deliverables}
+
+In my paper, I will:
+
+\begin{enumerate}
+\item summarise the history of HAMT,
+\item discuss various characteristics of HAMT's,
+\item benchmark HMAT's against other hash maps runnable from the JVM
+\item Reimplement the Clojure HAMT implementation in Clojure (originally in Java)
+\item describe how this implementation works
+\item attempt Clojure-specific optimisations and benchmark against the original implementation.
+\item analyze why performance characterists change,
+\item speculate on future work/directions for HAMT's.
+\end{enumerate}
+
+\printbibliography
+\end{document}

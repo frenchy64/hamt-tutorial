@@ -1,0 +1,9 @@
+*.aux
+*.pdf
+*.log
+*.bbl
+*.blg
+*.swp
+*-blx.bib
+*.xml
+.git-1

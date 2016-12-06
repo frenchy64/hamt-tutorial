@@ -1,0 +1,316 @@
+\def\mmmversion{1.1 Time-stamp: <2005-12-14 16:38:57 wand>}
+\message{mmm.sty - Mitch's Math Macros version \mmmversion}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%% Revision history:
+
+
+
+%% Tue Dec 17 13:28:29 2002:  initial version, based on material from
+%% my various macros files.
+
+
+%%%%%%%%%%%%%%%% TABLE OF CONTENTS %%%%%%%%%%%%%%%%
+
+% 0. Imported Packages
+
+% 1. Special TT Characters
+
+% 2. Mathematics and Semantics
+% 2.1 \ensuremath and friends
+% 2.2 creating operators
+% 2.3 Greek Letters Abbreviated
+% 2.4 Metavariables
+% 2.5 Some special things for semantics
+% 2.6 {block} -- for calculations or indented formulas
+% 2.7 opspace and friends
+
+% 3. BNF Grammars
+% 3.1 Grammar Elements
+% 3.2 Grammar Environments
+
+% 4. Diagrams (not much here)
+
+% 5. Figures and Displays (handy!)
+
+% 6. Miscellaneous Handy Things
+
+%%%%%%%%%%%%%%%% 0. Imported Packages %%%%%%%%%%%%%%%%
+
+\RequirePackage{alltt}
+\RequirePackage{xspace}
+%\RequirePackage{psfig}
+\RequirePackage{epsf}
+
+%%%%%%%%%%%%%%%% 1. Special TT Characters %%%%%%%%%%%%%%%%
+
+% tilde, backslash
+\def\til{{\tt\char'176}}        % \tt tilde
+\def\bs{{\tt\char'134}}         % \tt backslashes
+
+\def\hash{{\tt\char'043}}       % \tt hash
+\def\hasht{{\tt \hash t}}       % \tt #t
+\def\hashf{{\tt \hash f}}       % \tt #f
+
+\def\lbr{{\tt \char'173}}       % \tt braces
+\def\rbr{{\tt \char'175}}
+\def\ttvert{{\tt \char'174}}    % \tt vertical line
+
+%%%%%%%%%%%%%%%% 2. Mathematics %%%%%%%%%%%%%%%%
+
+%%%% 2.1 \ensuremath
+
+% Like \ensuremath, only better.  \xspace is your friend!
+\newcommand{\ma}[1]{\ensuremath{#1}\xspace}
+
+% use \mdef for 0-arg macros that are smart enough to go into mathmode without
+% your telling them to.
+
+\def\mdef#1#2{\def#1{\ma{#2}}}
+
+%%%% 2.2 creating operators
+
+\def\rmop#1{\ma{\mathop{\hbox{\rm #1\/}}\nolimits}}
+\def\itop#1{\ma{\mathop{\hbox{\it #1\/}}\nolimits}}
+\def\bfop#1{\ma{\mathop{\hbox{\bf #1\/}}\nolimits}}
+\def\ttop#1{\ma{\mathop{\hbox{\tt #1\/}}\nolimits}}
+
+\def\itord#1{\ma{\mathord{\hbox{\it #1\/}}}}
+\def\rmord#1{\ma{\mathord{\hbox{\rm #1\/}}}}
+\def\bford#1{\ma{\mathord{\hbox{\bf #1\/}}}}
+\def\ttord#1{\ma{\mathord{\hbox{\tt #1\/}}}}
+
+%% declaration syntax for these guys:
+
+\def\newrmop#1#2{\def#1{\rmop{#2}}}
+\def\newitop#1#2{\def#1{\itop{#2}}}
+\def\newbfop#1#2{\def#1{\bfop{#2}}}
+\def\newttop#1#2{\def#1{\ttop{#2}}}
+
+\def\newitord#1#2{\def#1{\itord{#2}}}
+\def\newrmord#1#2{\def#1{\rmord{#2}}}
+\def\newbford#1#2{\def#1{\bford{#2}}}
+\def\newttord#1#2{\def#1{\ttord{#2}}}
+
+%%%% 2.3 Greek Letters abbreviated
+
+\mdef\a{\alpha}
+\mdef\b{\beta}
+\mdef\g{\gamma}
+\mdef\r{\rho}
+\mdef\l{\lambda}
+\mdef\m{\mu}
+\mdef\G{\Gamma}
+\mdef\s{\sigma}
+\mdef\t{\tau}
+\mdef\z{\zeta}
+
+%%% 2.4 Metavariables: You should never write e, you should write \exp or
+%%% the like. 
+
+%% \newmeta defines a new metavariable, which is automatically
+%% subscripted. 
+
+\newcommand\newmeta[2]{\def#1##1{\ensuremath{#2_{##1}}}}
+
+% Example:
+% \newmeta\exp{\itop{e}}
+% use as: \exp0, \exp1, \exp2, \exp{}
+
+%%% 2.5 Math stuff for semantics:
+
+% \setof creates a set with brackets around it.  Use \alt for ``such
+% that''.  
+
+% Example: \setof{\exp{} \alt \rmop{fv}(\exp{}) \not= \emptyset}
+
+\def\setof#1{\ensuremath{\{#1\}}}
+
+%% \semfcn takes two arguments:  a semantic operator and an argument,
+%% and surrounds the argument in open braces.
+
+\def\semfcn#1#2{\mathop{#1}\nolimits\lbrack\!\lbrack{#2}\rbrack\!\rbrack}
+
+% \newdom: declare a new domain (probably same as \newitop).
+
+\def\newdom#1#2{\mdef#1{\mathop{\hbox{{\it #2}}}\nolimits\xspace}}
+
+% \car, \cdr, \cons 
+
+\mdef\car{\rmop{car}}
+\mdef\cdr{\rmop{cdr}}
+\mdef\cons{\rmop{cons}}
+
+%% 2.6 For block-structure & indented formulas
+
+\newcommand{\block}[1]{\begin{array}[t]{@{}l@{}l@{}l@{}l@{}l@{}l}#1\end{array}}
+
+
+%% 2.7 opspace and friends
+
+\newcommand\opspace{\mathop{}{}} % from Krivine paper
+\newcommand\opdots{\opspace \dots \opspace\opspace}  % math mode only
+\newcommand\commadots{, \dots, }  % math mode only
+
+%%%%%%%%%%%%%%%% 3. BNF Grammars %%%%%%%%%%%%%%%%
+
+%%%% 3.1 Grammar Elements
+
+% basic grammar elements
+% nonterminal names default to roman, even in theorems.
+\def\nt#1{\hbox{$\langle\hbox{\rm #1\/}\rangle$}}
+\def\term#1{\hbox{\tt #1}}      % I usually put \, before and after the hbox.
+\def\alt{~~\vert~~}
+
+\def\lparen{\term{(}}           % deprecated, because it breaks paren matching.
+\def\rparen{\term{)}}           % likewise
+
+\def\st#1{\ensuremath{\{#1\}^*}}
+\def\pl#1{\ensuremath{\{#1\}^+}}
+\def\seplist#1#2{\ensuremath{\{#1\}^{*({#2})}}}
+\def\pst#1{\term(\st{#1}\term)}
+
+%%%% 3.2 Grammar Environments
+
+%% Adapted from eopl.sty
+
+%% The grammar environment normally lives inside a displaymath.
+%% It automatically generates a ::= on each line.  
+%% It has 3 fields:  lll .  The 3th field is for commentary.
+%% Alas, Latex does not have a good way of automatically switching modes on a
+%% per-field basis, so you'll have to put in $...$ around text-mode stuff,or
+%% $|...|$ around tt-mode stuff.
+
+%% If you want different things in place of the ::=, use altgrammar
+%% instead.  
+
+%% Also you can use \multilineproduction for productions that are too
+%% long to fit on a single line.
+
+\newenvironment{grammar}{\begin{array}{l@{{}::={}}l@{\quad}l}}{\end{array}}
+
+% This version puts about the right amount of space around the
+% operator, at least to my eye.
+\newenvironment{altgrammar}{\begin{array}{l@{\ }c@{\ }l@{\qquad}l}}{\end{array}}
+% alternate version, with less space.
+% \newenvironment{altgrammar}{\begin{array}{l@{{}}c@{}ll}}{\end{array}}
+
+
+
+%% \production: for simple productions. rhs goes into tt by default.  
+%% If you want a comment in field 3, put it in an mbox. Example:
+
+% \production{\nt{expression}}
+%   {if \nt{expression} then \nt{expression} else \nt{expression}} 
+%   & \mbox{conditional expression} \\
+
+\def\production#1#2{{#1} & \texttt{#2}}
+
+% \altproduction: like \production, but for use with \altgrammar.
+
+\def\altproduction#1#2#3{{#1} &{#2} \texttt{#3}}
+
+% rhs for multiline production:  This is like a little array that can be used
+% for a production that spans multiple lines, as in:
+%
+% &\multilineproduction{
+%         \term{simpleclass}\ \nt{varlist}\ \nt{varlist}\ \nt{methdecls}\
+%                 \nt{exp} \\  
+%         \quad $|new-simpleclass (c-vars i-vars methdecls init-exp)|$ } \\
+
+
+\def\multilineproduction#1{\multicolumn{2}{@{}l}{\begin{array}[t]{@{}l}#1\end{array}}}
+
+%%%%%%%%%%%%%%%% 4. Diagrams %%%%%%%%%%%%%%%%
+
+%% I don't really know how to get a diagram centered reliably.  Here's
+%% the code that I have. 
+%% Wed Mar 12 14:46:32 2003: This seems to work.
+
+%% Wed Mar 12 14:47:12 2003 the diagramdirectory should end with a ``/''!
+
+\def\diagramdirectory{}
+\def\diagram#1{\centerline{\epsffile{\diagramdirectory#1}}}
+
+%% http://mars.fis.uc.pt/hera-b/epsfigures.html#epslatex suggests
+%% using epsfig, rather than psfig, and using \centering, as in:
+
+%\begin{figure}[htbp]
+%\centering
+%\epsfig{file=example.eps, width=\textwidth}
+%\caption{ Caption text. }
+%\label{fig:example}
+%\end{figure}
+
+% We'll have to try this sometime.
+
+%%%%%%%%%%%%%%%% 5. Figures and Displays %%%%%%%%%%%%%%%%
+
+%% separators for top and bottom of displays and figures:
+
+\def\dstart{\hbox to \hsize{\vrule depth 4pt\hrulefill\vrule depth 4pt}}
+\def\dend{\hbox to \hsize{\vrule height 4pt\hrulefill\vrule height 4pt}}
+% not used, I think.
+% \def\niceline{\hrule height 0.75pt}
+
+%% put nice lines at the top and bottom of figures to make them stand out from
+%% text.  Set these to {} to reset.
+\def\figstart{\bigskip\dstart}
+\def\figend{\dend\bigskip}
+
+%% display: like displaymath, but with nice lines at beginning and end
+
+\newenvironment{display}{\bigskip\dstart\begin{displaymath}}%
+{\end{displaymath}\dend\bigskip}
+
+%% titled displays: handy for grammars and stuff:
+
+\newenvironment{tdisplay}[1]{\vbox\bgroup\bigskip{\bf #1}\vspace{-8pt}\\\dstart\begin{displaymath}}%
+{\end{displaymath}\dend\bigskip\egroup}
+
+\renewenvironment{display}{\begin{tdisplay}{\ }}{\end{tdisplay}}
+
+
+
+
+% Example:  this also shows short-form grammars (but see above about
+% metavariables). 
+
+%\begin{tdisplay}{Sets2}
+%\begin{altgrammar}
+%v   &\in&      \Val   &\mbox{Expressed Values} \\
+%l   &\in&      \Loc   &\mbox{Locations} \\
+%s &\in&        \Sto   &\mbox{Stores} \\
+%\end{altgrammar}
+%\end{tdisplay}
+
+% in an altgrammar environment, the lhs's are left-aligned, whereas
+% they are right aligned in the first example.  Right now, I am
+% recommending altgrammar, which looks good to me.  YMMV.
+
+%%%%%%%%%%%%%%%% 6. Miscellaneous Handy Things %%%%%%%%%%%%%%%%
+
+% Use this with emacs time-stamp mode.
+
+\def\timestamp{}
+\def\Time-stamp: <#1>{\gdef\timestamp{#1}}
+
+% Put
+% % \Time-stamp: <> 
+% somewhere in the first few lines of your file.  Emacs will rewrite
+% the <> to a timestamp, and then you can do things like put the
+% following in your \author: 
+% {Draft of \timestamp}\\
+% Better than \date!
+
+% To use time-stamp mode in emacs, put the following lines in your
+% .emacs :
+
+% (add-hook 'write-file-hooks 'time-stamp)
+% ; optional: for compatibility with Emacs 20, Y2K:
+% (setq time-stamp-format "%:y-%02m-%02d %02H:%02M:%02S %u")
+
+% Mitch likes spaces between paragraphs!
+\def\betterspacing{\parskip=0.75ex plus 0.25ex}
+
