@@ -211,7 +211,7 @@
 
 \@setflag \@authoryear = \@true
 \@setflag \@blockstyle = \@false
-\@setflag \@copyrightwanted = \@true
+\@setflag \@copyrightwanted = \@false
 \@setflag \@explicitsize = \@false
 \@setflag \@legacycopyright = \@false
 \@setflag \@mathtime = \@false

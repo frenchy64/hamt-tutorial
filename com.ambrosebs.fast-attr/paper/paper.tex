@@ -251,21 +251,6 @@ Each key is associated with a value.
 Figure \ref{hashes} gives sample 32-bit hashes for six keys,
 which we will use only in this section.
 
-\begin{figure}
-  \begin{verbatim}
-           6    5     4     3     2     1     0
-hash(:a) = 00 00000 00000 00000 00000 00000 00001
-hash(:b) = 00 00000 00000 00000 00000 00000 00011
-hash(:c) = 00 00000 00000 00000 00000 00000 00101
-hash(:d) = 00 00000 00000 00000 00000 00000 01010
-hash(:e) = 00 00000 00000 00000 00000 00000 10100
-hash(:f) = 00 00000 00000 00000 00000 00001 10100
-  \end{verbatim}
-  \label{hashes}
-  \caption{Example 32-bit binary hashes for six keys, partitioned
-    into 6 groups.}
-\end{figure}
-
 A HAMT starts as an empty tree with no root.
 
 \paragraph{Insertion}
@@ -349,6 +334,22 @@ respectively.
 
 We repeat this with a few more keys---we leave the intermediate
 stages as an exercise for the reader.
+
+\begin{figure}
+  \begin{verbatim}
+           6    5     4     3     2     1     0
+hash(:a) = 00 00000 00000 00000 00000 00000 00001
+hash(:b) = 00 00000 00000 00000 00000 00000 00011
+hash(:c) = 00 00000 00000 00000 00000 00000 00101
+hash(:d) = 00 00000 00000 00000 00000 00000 01010
+hash(:e) = 00 00000 00000 00000 00000 00000 10100
+hash(:f) = 00 00000 00000 00000 00000 00001 10100
+  \end{verbatim}
+  \label{hashes}
+  \caption{Example 32-bit binary hashes for six keys, partitioned
+    into 6 groups.}
+\end{figure}
+
 
 \begin{Verbatim}[commandchars=\\\{\},codes={\catcode`$=3\catcode`^=7\catcode`_=8}]
 0000 0000 000\textcolor{red}{1} 0000 0000 0100 00\textcolor{red}{1}0 \textcolor{red}{1}010
