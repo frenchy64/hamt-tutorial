@@ -4,7 +4,7 @@
                             hash-map])
   (:import (clojure.lang IPersistentMap MapEntry Box)
            (java.util.concurrent.atomic AtomicReference))
-  (:use [rhizome.viz])
+  (:use [rhizome.viz :as viz])
   (:require [rhizome.dot :as dot])
   (:require [clojure.core :as core]
             [collection-check :refer [assert-map-like]]
@@ -2204,9 +2204,9 @@
     ))
 
 ;cat tree.dot  | dot -Gdpi=64 -Tpng:cairo:cairo > tree.png
-(defn dot-to-disk [m]
+(defn dot-to-disk [m dot-name]
   (let [data (visualize* m 0)]
-    (spit "tree.dot"
+    (spit (str dot-name ".dot")
     (dot/tree->dot (comp vector? :children) :children data
                :node->descriptor (fn [n] 
                                    {:label (:label n)
@@ -2291,18 +2291,18 @@
                          ;:i 9
                          ;:j 10
                          )))
-    (dot-to-disk (create (hash-map
-                         :a 1
-                         :b 2
-                         :c 3
-                         :d 4
-                         :e 5
-                         :f 6
-                         :g 7
-                         :h 8
-                         :i 9
-                         :j 10
-                         )))
+    (dot-to-disk (hash-map
+                   :a 1
+                   :b 2
+                   :c 3
+                   :d 4
+                   :e 5
+                   :f 6
+                   :g 7
+                   :h 8
+                   :i 9
+                   :j 10)
+                 "example")
     (visualize (create {5 true
                         9 true}))
     (let [n 23] (create (zipmap (range n) (range n))))
