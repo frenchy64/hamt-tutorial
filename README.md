@@ -21,7 +21,7 @@ It was also just a great excuse to learn all this stuff.
 
 The accompanying [paper](paper/paper.pdf) gives a tutorial on HAMT's,
 and outlines other details are required by my course which are less
-useful for the causal reader.
+useful for the casual reader.
 
 ## PersistentHashMap port
 
