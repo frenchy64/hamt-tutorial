@@ -77,7 +77,7 @@ user=> (hamt/visualize (hamt/hash-map 1 2))
 nil
 ```
 
-Here's what would popup.
+Here's what would pop up.
 
 <p align="center">
   <img src="rhizome-small-eg.png" />
