@@ -557,9 +557,9 @@ The source for the mask function (below),
 selects partitions
 by
 shifting the hash's bits right until the first
-5 bits is the parition needed, then the 
+5 bits is the partition needed, then the 
 first 5 bits of the result
-interpretted as an integer
+interpreted as an integer
 (Appendix~\ref{jvm-bit-remark} explains \texttt{>>>}).
 
 
@@ -1183,7 +1183,7 @@ the map with.
 Figure~\ref{benchmark-code} contains the benchmark
 code. The purpose of the benchmark is to simulate
 a set of map associations followed by many lookups,
-since our optimization only triggers after an assocation
+since our optimization only triggers after an association
 operation.
 In this version of the benchmark, we perform 20
 associations, each with 400,000 lookups
@@ -1207,7 +1207,7 @@ After 1,500 keys, there is an unknown problem with our optimized
 implementation. Our hand-written benchmarking scheme
 does not compensate for garbage collection and is rather crude,
 so we would like to revisit this benchmark in the future to 
-investiate this issue.
+investigate this issue.
 
 \subsection{Interpretation}
 
@@ -1255,7 +1255,7 @@ Our approach to speeding up the hash-map implementation
 is related to \textit{storage strategies}
 by Bolz et. al~\cite{Bolz13storagestrategies}.
 They observe that dynamically typed languages often use
-heterogeous collections as homogeneous, and present
+heterogenous collections as homogeneous, and present
 optimizations to take advantage of this fact.
 
 
