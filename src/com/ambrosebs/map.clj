@@ -28,17 +28,17 @@
 
 ;; does not test keywords
 (defmacro cond [& [c1 c2 :as clauses]]
-  (when clauses
-    (when-not (next clauses)
-      (throw (IllegalArgumentException.
-               "cond requires an even number of forms")))
-    (if (keyword? c1)
-      c2
-      (list 'if c1
-            c2
-            (let [nnclauses (next (next clauses))]
-              (assert nnclauses "Final clause must be keyword test")
-              (cons `cond nnclauses))))))
+  (assert clauses "Final clause must be keyword test")
+  (when-not (next clauses)
+    (throw (IllegalArgumentException.
+             "cond requires an even number of forms")))
+  (if (keyword? c1)
+    c2
+    (list 'if c1
+          c2
+          (let [nnclauses (next (next clauses))]
+            (assert nnclauses "Final clause must be keyword test")
+            (cons `cond nnclauses)))))
 
 
 (defonce ^:private NOT-FOUND
