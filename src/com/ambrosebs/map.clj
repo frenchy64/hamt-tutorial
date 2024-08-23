@@ -9,7 +9,8 @@
 (ns com.ambrosebs.map
   (:refer-clojure :exclude [bit-shift-right
                             bit-shift-left
-                            hash-map])
+                            hash-map
+                            cond])
   (:require [clojure.core :as core])
   (:import (clojure.lang IPersistentMap MapEntry Box)
            (java.util.concurrent.atomic AtomicReference)))
@@ -24,6 +25,19 @@
 
 (defmacro identical-ints? [x y]
   `(com.ambrosebs.map.Util/identicalInts ~x ~y))
+
+;; does not test keywords
+(defmacro cond [& [c1 c2 :as clauses]]
+  (when clauses
+    (when-not (next clauses)
+      (throw (IllegalArgumentException.
+               "cond requires an even number of forms")))
+    (if (keyword? c1)
+      c2
+      (list 'if c1
+            c2
+            (cons `cond (next (next clauses)))))))
+
 
 (defonce ^:private NOT-FOUND
   (Object.))
@@ -144,7 +158,7 @@
    ;(prn "create-node")
    (let [key1hash (core/hash key1)]
      (cond
-       (= key1hash key2hash)
+       (identical-ints? key1hash key2hash)
        (hash-collision-node-ctor
          nil
          key1hash
