@@ -25,7 +25,7 @@
 (extend-protocol IMapVisualize
   BitmapIndexedNode
   (visualize* [this level]
-    (let [bitmap (map/node-bitmap this)
+    (let [bitmap (.nodeBitmap this)
           ^objects array (.array this)]
       {:label (str "Level " level " BitmapIndexedNode bitmap:\n" (binary-str #_Integer/toHexString bitmap)
                    "\nCapacity: " (Integer/bitCount bitmap) "/" (/ (alength array) 2))
@@ -94,7 +94,7 @@
 
   HashCollisionNode
   (visualize* [this level]
-    (let [array (map/hash-collision-node-array this)]
+    (let [array (.hashCollisionNodeArray this)]
       {:label (str "HashCollisionNode:" hash)
        :shape :box
        :children (vec

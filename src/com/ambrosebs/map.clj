@@ -42,74 +42,70 @@
 (defonce ^:private NOT-FOUND
   (Object.))
 
-(defprotocol INode
-  (assoc-node
-    [this
-     shift ;int
+(definterface INode
+  (assocNode
+    ^com.ambrosebs.map.INode 
+    [shift ;int
      hash ;int
      key
      val
      ;; set to the node if this assoc adds an extra leaf
      added-leaf ;Box
-     ]
-    [this
-     edit ;AtomicReference
+     ])
+  (assocNode
+    ^com.ambrosebs.map.INode
+    [edit ;AtomicReference
      shift ;int
      hash ;int
      key
      val
      added-leaf ;Box
      ])
-  (without-node
-    [this
-     shift ;int
+  (withoutNode
+    [shift ;int
      hash ;int
-     key]
-    [this
-     edit ;AtomicReference 
+     key])
+  (withoutNode
+    [edit ;AtomicReference 
      shift ;int
      hash  ;int
      key
      removed-leaf ;Box
      ])
-  (find-node
-    [this
-     shift ;int
+  (findNode
+    [shift ;int
      hash  ;int
-     key]
-    [this
-     shift ;int
+     key])
+  (findNode
+    [shift ;int
      hash  ;int
      key
      not-found])
   (;ISeq
-   node-seq [this])
-  (kvreduce-node
-    [this
-     f ;IFn
+   nodeSeq [])
+  (kvreduceNode
+    [f ;IFn
      init])
-  (fold-node
-    [this
-     combinef ;IFn
+  (foldNode
+    [combinef ;IFn
      reducef  ;IFn
      fjtask   ;IFn
      fjfork   ;IFn
      fjjoin]) ;IFn
-  (;Iterator 
-    node-iterator
-    [this
-     f])) ;IFn
+  (^java.util.Iterator 
+    nodeIterator
+    [f])) ;IFn
 
-(defprotocol EnsureEditable
-  (ensure-editable [this edit]
-                   [this edit count array]))
+(definterface EnsureEditable
+  (ensureEditable [edit])
+  (ensureEditable [edit count array]))
 
-(defprotocol EditAndSet
-  (edit-and-set [this edit i a]
-                [this edit i a j b]))
+(definterface EditAndSet
+  (editAndSet [edit i a])
+  (editAndSet [edit i a j b]))
 
-(defprotocol EditAndRemovePair
-  (edit-and-remove-pair [this edit bit i]))
+(definterface EditAndRemovePair
+  (editAndRemovePair [edit bit i]))
 
 (defn bit-index [bitmap bit]
   {:pre [(int bitmap)
@@ -134,7 +130,7 @@
          (number? shift)]}
   (bit-shift-left 1 (mask hash shift)))
 
-(declare EMPTY-BMIN)
+(declare ^INode EMPTY-BMIN)
 
 (defn inode-array [size]
   (make-array
@@ -169,10 +165,11 @@
        :else
        (let [added-leaf (Box. nil)]
          (-> EMPTY-BMIN
-             (assoc-node
+             ^com.ambrosebs.map.INode
+             (.assocNode
                edit shift key1hash
                key1 val1 added-leaf)
-             (assoc-node
+             (.assocNode
                edit shift key2hash
                key2 val2 added-leaf))))))
   ([shift key1 val1 key2hash key2 val2]
@@ -190,10 +187,11 @@
        (let [added-leaf (Box. nil)
              edit (AtomicReference.)]
          (-> EMPTY-BMIN
-             (assoc-node
+             ^com.ambrosebs.map.INode
+             (.assocNode
                edit shift key1hash
                key1 val1 added-leaf)
-             (assoc-node
+             (.assocNode
                edit shift key2hash
                key2 val2 added-leaf)))))))
 
@@ -209,13 +207,13 @@
         ]
     new-array))
 
-(declare bitmap-indexed-node-ctor
-         node-seq-create
+(declare ^INode bitmap-indexed-node-ctor
+         nodeSeq-create
          node-iter-ctor
-         node-seq-kvreduce)
+         nodeSeq-kvreduce)
 
-(defprotocol IBitmap
-  (node-bitmap [this]))
+(definterface IBitmap
+  (nodeBitmap []))
 
 (deftype BitmapIndexedNode
   [^:volatile-mutable bitmap ;int
@@ -224,34 +222,34 @@
   java.io.Serializable
 
   IBitmap
-  (node-bitmap [this] bitmap)
+  (nodeBitmap [this] bitmap)
 
   INode
-  (assoc-node
+  (assocNode
     [this shift hash key val added-leaf]
     {:pre [(number? shift)
            (number? hash)]}
     #_
-    (prn "BitmapIndexedNode assoc-node, no edit" 
+    (prn "BitmapIndexedNode assocNode, no edit" 
          ;shift hash key val added-leaf
          )
     (let [^Box added-leaf added-leaf
           bit (bitpos hash shift)
           idx (bit-index bitmap bit)]
       #_
-      (prn "bitmap BitmapIndexedNode assoc-node - edit" (binary-str bitmap))
+      (prn "bitmap BitmapIndexedNode assocNode - edit" (binary-str bitmap))
       (cond
         (not (zero? (bit-and bitmap bit)))
-        (let [key-or-null (aget array (* 2 idx))
-              val-or-node (aget array (inc (* 2 idx)))]
+        (let [^INode key-or-null (aget array (* 2 idx))
+              ^INode val-or-node (aget array (inc (* 2 idx)))]
           (cond
             (nil? key-or-null)
-            (let [n (assoc-node val-or-node
-                                (+ shift 5)
-                                hash
-                                key
-                                val
-                                added-leaf)]
+            (let [n (.assocNode val-or-node
+                                 (+ shift 5)
+                                 hash
+                                 key
+                                 val
+                                 added-leaf)]
               (if (identical? n val-or-node)
                 this
                 (bitmap-indexed-node-ctor
@@ -298,7 +296,7 @@
             (let [^objects nodes (inode-array 32)
                   jdx (mask hash shift)
                   _ (aset nodes jdx
-                          (assoc-node
+                          (.assocNode
                             EMPTY-BMIN
                             (+ shift 5)
                             hash
@@ -317,7 +315,7 @@
                             (if (nil? (aget array j))
                               (aset nodes i (aget array (inc j)))
                               (aset nodes i
-                                    (assoc-node 
+                                    (.assocNode 
                                       EMPTY-BMIN
                                       (+ shift 5)
                                       (core/hash
@@ -357,7 +355,7 @@
                 (bit-or bitmap bit)
                 new-array)))))))
 
-  (without-node
+  (withoutNode
     [this shift hash key]
     (let [bit (bitpos hash shift)]
       (cond
@@ -366,11 +364,11 @@
         
         :else
         (let [idx (bit-index bitmap bit)
-              key-or-null (aget array (* 2 idx))
-              val-or-node (aget array (inc (* 2 idx)))]
+              ^INode key-or-null (aget array (* 2 idx))
+              ^INode val-or-node (aget array (inc (* 2 idx)))]
           (cond
             (nil? key-or-null)
-            (let [n (without-node 
+            (let [n (.withoutNode 
                       val-or-node
                       (+ shift 5)
                       hash
@@ -414,9 +412,9 @@
                   idx)))
 
             :else this)))))
-    (find-node 
+    (findNode 
       [this shift hash key]
-      ;(prn "bitmap-indexed-node-ctor find-node")
+      ;(prn "bitmap-indexed-node-ctor findNode")
       (let [not-found nil
             bit (bitpos hash shift)]
         (cond
@@ -427,17 +425,17 @@
 
           :else
           (let [idx (bit-index bitmap bit)
-                key-or-null (aget array (* 2 idx))
-                val-or-node (aget array (inc (* 2 idx)))]
+                ^INode key-or-null (aget array (* 2 idx))
+                ^INode val-or-node (aget array (inc (* 2 idx)))]
             (cond
               ;; if key is nil, this means there's a sub-trie
               ;; in the val position.
               ;; Now, recursively perform the lookup in the
               ;; sub-trie.
               (nil? key-or-null)
-              (find-node val-or-node
-                         (+ shift 5)
-                         hash key)
+              (.findNode val-or-node
+                          (+ shift 5)
+                          hash key)
 
               (= key key-or-null)
               (MapEntry/create
@@ -446,7 +444,7 @@
 
               :else
               not-found)))))
-  (find-node
+  (findNode
     [this shift hash key not-found]
     (let [bit (bitpos hash shift)]
       (cond
@@ -455,15 +453,15 @@
 
         :else
         (let [idx (bit-index bitmap bit)
-              key-or-null (aget array (* 2 idx))
-              val-or-node (aget array (inc (* 2 idx)))]
+              ^INode key-or-null (aget array (* 2 idx))
+              ^INode val-or-node (aget array (inc (* 2 idx)))]
           (cond
             (nil? key-or-null)
-            (find-node val-or-node
-                       (+ shift 5)
-                       hash
-                       key
-                       not-found)
+            (.findNode val-or-node
+                        (+ shift 5)
+                        hash
+                        key
+                        not-found)
 
             (= key key-or-null)
             val-or-node
@@ -471,24 +469,24 @@
             :else
             not-found)))))
 
-  (node-seq [this]
+  (nodeSeq [this]
     ;(prn "seq of BitmapIndexedNode")
     ;(pprint array)
-    (node-seq-create array))
+    (nodeSeq-create array))
 
-  (node-iterator [this f]
+  (nodeIterator [this f]
     (node-iter-ctor array f))
 
-  (kvreduce-node [this f init]
-    (node-seq-kvreduce array f init))
+  (kvreduceNode [this f init]
+    (nodeSeq-kvreduce array f init))
 
-  (fold-node [this 
+  (foldNode [this 
               combinef reducef fjtask fjfork fjjoin]
-    (node-seq-kvreduce
+    (nodeSeq-kvreduce
       array reducef (combinef)))
 
   EnsureEditable
-  (ensure-editable [this edit]
+  (ensureEditable [this edit]
     (if (identical? (.-edit this) edit)
       this
       (let [n (Integer/bitCount bitmap)
@@ -509,25 +507,25 @@
           new-array))))
 
   EditAndSet
-  (edit-and-set [this edit i a]
+  (editAndSet [this edit i a]
     (let [^BitmapIndexedNode editable
-          (ensure-editable this edit)
+          (.ensureEditable this edit)
           _ (aset ^objects (.-array editable) i a)]
       editable))
 
-  (edit-and-set [this edit i a j b]
+  (editAndSet [this edit i a j b]
     (let [^BitmapIndexedNode editable
-          (ensure-editable this edit)
+          (.ensureEditable this edit)
           _ (aset ^objects (.-array editable) i a)
           _ (aset ^objects (.-array editable) j b)]
       editable))
 
   EditAndRemovePair
-  (edit-and-remove-pair [this edit bit i]
+  (editAndRemovePair [this edit bit i]
     (if (identical-ints? bitmap bit)
       nil
       (let [^BitmapIndexedNode editable
-            (ensure-editable this edit)
+            (.ensureEditable this edit)
             ;_ (prn "bitmap before" (binary-str (.-bitmap editable)))
             _ (set! (.-bitmap editable)
                     (bit-xor (.-bitmap editable)
@@ -550,13 +548,13 @@
                     nil)]
         editable)))
 
-  (assoc-node [this edit shift hash key val added-leaf]
+  (assocNode [this edit shift hash key val added-leaf]
     {:pre [(number? shift)
            (number? hash)
            (instance? Box added-leaf)]}
     (assert (= hash (core/hash key)))
     #_
-    (prn "BitmapIndexedNode assoc-node, with edit" 
+    (prn "BitmapIndexedNode assocNode, with edit" 
          ;shift hash key val added-leaf
          )
     (let [^Box added-leaf added-leaf
@@ -565,7 +563,7 @@
       ;(prn "bit pos" bit)
       ;(prn "bit index" idx)
       #_
-      (prn "bitmap BitmapIndexedNode assoc-node + edit" 
+      (prn "bitmap BitmapIndexedNode assocNode + edit" 
            (binary-str bitmap)
            (binary-str bit)
            (bit-and bitmap bit)
@@ -574,48 +572,48 @@
       (cond
         ;; we've found a match
         (not (zero? (bit-and bitmap bit)))
-        (let [key-or-null (aget array (* 2 idx))
-              val-or-node (aget array (inc (* 2 idx)))]
+        (let [^INode key-or-null (aget array (* 2 idx))
+              ^INode val-or-node (aget array (inc (* 2 idx)))]
           (cond
             (nil? key-or-null)
-            (let [n (assoc-node val-or-node
-                                edit
-                                (+ shift 5)
-                                hash
-                                key
-                                val
-                                added-leaf)]
+            (let [n (.assocNode val-or-node
+                                 edit
+                                 (+ shift 5)
+                                 hash
+                                 key
+                                 val
+                                 added-leaf)]
               (if (identical? n val-or-node)
                 this
-                (edit-and-set this
-                              edit
-                              (inc (* 2 idx))
-                              n)))
+                (.editAndSet this
+                               edit
+                               (inc (* 2 idx))
+                               n)))
 
             (= key key-or-null)
             (if (identical? val val-or-node)
               this
-              (edit-and-set this
-                            edit
-                            (inc (* 2 idx))
-                            val))
+              (.editAndSet this
+                             edit
+                             (inc (* 2 idx))
+                             val))
 
             :else
             (let [_ (set! (.-val added-leaf)
                           added-leaf)]
-              (edit-and-set this
-                            edit
-                            (* 2 idx)
-                            nil
-                            (inc (* 2 idx))
-                            (create-node
-                              edit
-                              (+ shift 5)
-                              key-or-null
-                              val-or-node
-                              hash
-                              key
-                              val)))))
+              (.editAndSet this
+                             edit
+                             (* 2 idx)
+                             nil
+                             (inc (* 2 idx))
+                             (create-node
+                               edit
+                               (+ shift 5)
+                               key-or-null
+                               val-or-node
+                               hash
+                               key
+                               val)))))
         :else
         (let [;_ (prn "else branch, bitCount")
               n (Integer/bitCount bitmap)]
@@ -627,7 +625,7 @@
                   _ (set! (.-val added-leaf)
                           added-leaf)
                   ^BitmapIndexedNode
-                  editable (ensure-editable
+                  editable (.ensureEditable
                              this
                              edit)
                   _ (System/arraycopy
@@ -642,13 +640,13 @@
                   _ (aset ^objects (.-array editable)
                           (inc (* 2 idx))
                           val)
-                  ;_ (prn "bitmap before assoc-node" 
+                  ;_ (prn "bitmap before assocNode" 
                   ;       (binary-str (.-bitmap editable))
                   ;       (seq (.-array editable)))
                   _ (set! (.-bitmap editable)
                           (bit-xor (.-bitmap editable)
                                    bit))]
-                  ;(prn "bitmap after assoc-node" 
+                  ;(prn "bitmap after assocNode" 
                   ;     (binary-str (.-bitmap editable))
                   ;     (seq (.-array editable)))
               editable)
@@ -659,7 +657,7 @@
                   nodes (inode-array 32)
                   jdx (mask hash shift)
                   _ (aset nodes jdx
-                          (assoc-node 
+                          (.assocNode 
                             EMPTY-BMIN
                             edit
                             (+ shift 5)
@@ -679,7 +677,7 @@
                           (let [_ (if (nil? (aget array j))
                                     (aset nodes i (aget array (inc j)))
                                     (aset nodes i
-                                          (assoc-node
+                                          (.assocNode
                                             EMPTY-BMIN
                                             edit
                                             (+ shift 5)
@@ -723,7 +721,7 @@
                   ;_ (print "new array, second half")
                   ;_ (pprint new-array)
                   ^BitmapIndexedNode
-                  editable (ensure-editable
+                  editable (.ensureEditable
                              this edit)
                   _ (set! (.-array editable) new-array)
                   _ (set! (.-bitmap editable)
@@ -731,7 +729,7 @@
                                   bit))]
               editable))))))
 
-  (without-node [this edit shift hash key removed-leaf]
+  (withoutNode [this edit shift hash key removed-leaf]
     (let [^Box removed-leaf removed-leaf
           bit (bitpos hash shift)]
       (cond
@@ -740,11 +738,11 @@
 
         :else
         (let [idx (bit-index bitmap bit)
-              key-or-null (aget array (* 2 idx))
-              val-or-node (aget array (inc (* 2 idx)))]
+              ^INode key-or-null (aget array (* 2 idx))
+              ^INode val-or-node (aget array (inc (* 2 idx)))]
           (cond
             (nil? key-or-null)
-            (let [n (without-node
+            (let [n (.withoutNode
                       val-or-node
                       edit
                       (+ shift 5)
@@ -756,7 +754,7 @@
                 this
 
                 n
-                (edit-and-set
+                (.editAndSet
                   this
                   edit
                   (inc (* 2 idx))
@@ -766,7 +764,7 @@
                 nil
 
                 :else
-                (edit-and-remove-pair
+                (.editAndRemovePair
                   this
                   edit
                   bit
@@ -779,7 +777,7 @@
               ;; because it relies on a helper method `editAndRemovePair` that correctly handles the empty case, that method doesn't have this bug.
               ;; - Ben Bader
               ;; TODO: collapse  - rhickey
-              (edit-and-remove-pair
+              (.editAndRemovePair
                 this edit bit idx))
 
             :else
@@ -793,8 +791,9 @@
         i
         (recur (+ 2 i))))))
 
-(defprotocol IHashCollisionNode
-  (hash-collision-node-array ^objects [this]))
+(definterface IHashCollisionNode
+  (hashCollisionNodeArray ;^objects
+                          []))
 
 (deftype HashCollisionNode
   [hash ;int
@@ -803,13 +802,13 @@
    edit ; AtomicReference<Thread>
    ]
   IHashCollisionNode
-  (hash-collision-node-array [this] array)
+  (hashCollisionNodeArray [this] array)
 
   INode
-  (assoc-node
+  (assocNode
     [this shift hash key val added-leaf]
     (let [^Box added-leaf added-leaf]
-      ;(prn "HashCollisionNode assoc-node")
+      ;(prn "HashCollisionNode assocNode")
       (if (identical-ints? hash (.-hash this))
         (let [idx (find-index array count key)]
           (cond
@@ -843,14 +842,14 @@
             nil
             (bitpos (.-hash this) shift)
             (object-array [nil this]))
-          (assoc-node
+          (.assocNode
             shift
             hash
             key
             val
             added-leaf)))))
 
-  (without-node [this shift hash key]
+  (withoutNode [this shift hash key]
     (let [idx (find-index array count key)]
       (cond
         (identical-ints? -1 idx)
@@ -868,36 +867,36 @@
             array
             (/ idx 2))))))
 
-  (find-node [this shift hash key]
+  (findNode [this shift hash key]
     (let [idx (find-index array count key)]
       (if (< idx 0)
         nil
         (MapEntry/create (aget array idx)
                          (aget array (inc idx))))))
 
-  (find-node [this shift hash key not-found]
+  (findNode [this shift hash key not-found]
     (let [idx (find-index array count key)]
       (if (< idx 0)
         not-found
         (MapEntry/create (aget array idx)
                          (aget array (inc idx))))))
 
-  (node-seq [this]
-    (node-seq-create array))
+  (nodeSeq [this]
+    (nodeSeq-create array))
 
-  (node-iterator [this f]
+  (nodeIterator [this f]
     (node-iter-ctor array f))
 
-  (kvreduce-node [this f init]
-    (node-seq-kvreduce array f init))
+  (kvreduceNode [this f init]
+    (nodeSeq-kvreduce array f init))
 
-  (fold-node [this 
+  (foldNode [this 
               combinef reducef fjtask fjfork fjjoin]
-    (node-seq-kvreduce
+    (nodeSeq-kvreduce
       array reducef (combinef)))
 
   EnsureEditable
-  (ensure-editable [this edit]
+  (ensureEditable [this edit]
     (if (identical? (.-edit this) edit)
       this
       (let [;; make room for next assoc
@@ -907,7 +906,7 @@
         (hash-collision-node-ctor
           edit hash count new-array))))
 
-  (ensure-editable [this edit count array]
+  (ensureEditable [this edit count array]
     (if (identical? (.-edit this) edit)
       (let [_ (set! (.-array this) array)
             _ (set! (.-count this) count)]
@@ -916,20 +915,20 @@
         edit hash count array)))
 
   EditAndSet
-  (edit-and-set [this edit i a]
+  (editAndSet [this edit i a]
     (let [^HashCollisionNode editable
-          (ensure-editable this edit)
+          (.ensureEditable this edit)
           _ (aset ^objects (.-array editable) i a)]
       editable))
 
-  (edit-and-set [this edit i a j b]
+  (editAndSet [this edit i a j b]
     (let [^HashCollisionNode editable
-          (ensure-editable this edit)
+          (.ensureEditable this edit)
           _ (aset ^objects (.-array editable) i a)
           _ (aset ^objects (.-array editable) j b)]
       editable))
 
-  (assoc-node [this edit shift hash key val added-leaf]
+  (assocNode [this edit shift hash key val added-leaf]
     (let [^Box added-leaf added-leaf]
       (if (identical-ints? hash (.-hash this))
         (let [idx (find-index array count key)]
@@ -938,13 +937,13 @@
             (if (identical? (aget array (inc idx))
                             val)
               this
-              (edit-and-set 
+              (.editAndSet 
                 this edit (inc idx) val))
 
             (> (alength array) (* 2 count))
             (let [_ (set! (.-val added-leaf) added-leaf)
                   ^HashCollisionNode
-                  editable (edit-and-set
+                  editable (.editAndSet
                              this
                              edit
                              (* 2 count)
@@ -966,7 +965,7 @@
                   _ (aset new-array (alength array) key)
                   _ (aset new-array (inc (alength array)) val)
                   _ (set! (.-val added-leaf) added-leaf)]
-              (ensure-editable
+              (.ensureEditable
                 this
                 edit
                 (inc count)
@@ -977,10 +976,10 @@
             edit
             (bitpos (.-hash this) shift)
             (object-array [nil this nil nil]))
-          (assoc-node
+          (.assocNode
             edit shift hash key val added-leaf)))))
 
-  (without-node [this edit shift hash key removed-leaf]
+  (withoutNode [this edit shift hash key removed-leaf]
     (let [^Box removed-leaf removed-leaf
           idx (find-index array count key)]
       (if (identical-ints? -1 idx)
@@ -990,7 +989,7 @@
             nil
             (let [^HashCollisionNode
                   editable
-                  (ensure-editable
+                  (.ensureEditable
                     this edit)
                   _ (aset ^objects (.-array editable) idx
                           (aget ^objects (.-array editable)
@@ -1006,8 +1005,8 @@
                           (dec (.-count editable)))]
               editable)))))))
 
-(defn node-seq-ctor 
-  ([array i] (node-seq-ctor nil array i nil))
+(defn nodeSeq-ctor 
+  ([array i] (nodeSeq-ctor nil array i nil))
   ([meta ^objects array i s]
    {:pre [(or (nil? meta)
               (map? meta))
@@ -1016,7 +1015,7 @@
               (seq? s))]}
    (proxy [clojure.lang.ASeq] [meta]
      (withMeta [meta]
-       (node-seq-ctor meta array i s))
+       (nodeSeq-ctor meta array i s))
      (first []
        ;(pprint array)
        ;(prn i)
@@ -1026,11 +1025,11 @@
                           (aget array (inc i)))))
      (next []
        (if s
-         (node-seq-create array i (next s))
-         (node-seq-create array (+ i 2) nil))))))
+         (nodeSeq-create array i (next s))
+         (nodeSeq-create array (+ i 2) nil))))))
 
-(defn node-seq-create 
-  ([array] (node-seq-create array 0 nil))
+(defn nodeSeq-create 
+  ([array] (nodeSeq-create array 0 nil))
   ([^objects array i s]
    {:pre [(integer? i)
           (or (nil? s)
@@ -1039,27 +1038,27 @@
      (every? (fn [[k v]]
                (if (nil? k)
                  (or (nil? v)
-                     (extends? INode (class v)))
+                     (instance? INode v))
                  true))
              (partition 2 array))
      (pr-str array))
    (if s
-     (node-seq-ctor nil array i s)
+     (nodeSeq-ctor nil array i s)
      (loop [j i]
        (when (< j (alength array))
          (if (aget array j)
-           (node-seq-ctor nil array j nil)
-           (let [node (aget array (inc j))]
+           (nodeSeq-ctor nil array j nil)
+           (let [^INode node (aget array (inc j))]
              ;(prn "node" node)
              (or
                (when node
-                 (let [node-seq (node-seq node)]
-                   (when node-seq
-                     (node-seq-ctor 
-                       nil array (+ j 2) node-seq))))
+                 (let [nodeSeq (.nodeSeq node)]
+                   (when nodeSeq
+                     (nodeSeq-ctor 
+                       nil array (+ j 2) nodeSeq))))
                (recur (+ j 2))))))))))
 
-(defn node-seq-kvreduce [^objects array f init]
+(defn nodeSeq-kvreduce [^objects array f init]
   (loop [i 0
          init init]
     (if (< i (alength array))
@@ -1068,9 +1067,9 @@
           (if (reduced? init)
             init
             (recur (+ i 2) init)))
-        (let [node (aget array (inc i))
+        (let [^INode node (aget array (inc i))
               init (if node
-                     (kvreduce-node node f init)
+                     (.kvreduceNode node f init)
                      init)]
           (if (reduced? init)
             init
@@ -1091,7 +1090,7 @@
 (defn array? [a]
   (.isArray (class a)))
 
-(defn bitmap-indexed-node-ctor
+(defn ^BitmapIndexedNode bitmap-indexed-node-ctor
   [edit bitmap array]
   {:pre [(or (nil? edit)
              (instance? AtomicReference edit))
@@ -1137,30 +1136,30 @@
         edit @bitmap new-array))))
 
 (declare array-node-iter-ctor
-         array-node-seq-create
+         array-nodeSeq-create
          fold-tasks)
 
 (deftype ArrayNode [count ^objects array edit]
   INode
-  (assoc-node [this shift hash key val added-leaf]
-    ;(prn "ArrayNode assoc-node")
+  (assocNode [this shift hash key val added-leaf]
+    ;(prn "ArrayNode assocNode")
     (let [idx (mask hash shift)
-          node (aget array idx)]
+          ^INode node (aget array idx)]
       (cond
         (nil? node)
         (array-node-ctor
           nil
           (inc count)
           (clone-and-set array idx
-                         (assoc-node EMPTY-BMIN
-                                     (+ shift 5)
-                                     hash
-                                     key
-                                     val
-                                     added-leaf)))
+                         (.assocNode EMPTY-BMIN
+                                      (+ shift 5)
+                                      hash
+                                      key
+                                      val
+                                      added-leaf)))
 
         :else
-        (let [n (assoc-node node
+        (let [n (.assocNode node
                             (+ shift 5)
                             hash
                             key
@@ -1174,12 +1173,12 @@
               (clone-and-set
                 array idx n)))))))
 
-  (without-node [this shift hash key]
+  (withoutNode [this shift hash key]
     (let [idx (mask hash shift)
-          node (aget array idx)]
+          ^INode node (aget array idx)]
       (if (nil? node)
         this
-        (let [n (without-node
+        (let [n (.withoutNode
                   node
                   (+ shift 5)
                   hash
@@ -1205,54 +1204,55 @@
               count
               (clone-and-set array idx n)))))))
 
-  (find-node [this shift hash key]
+  (findNode [this shift hash key]
     (let [idx (mask hash shift)
-          node (aget array idx)]
+          ^INode node (aget array idx)]
       (if (nil? node)
         nil
-        (find-node
+        (.findNode
           node
           (+ shift 5)
           hash
           key))))
 
-  (find-node [this shift hash key not-found]
+  (findNode [this shift hash key not-found]
     (let [idx (mask hash shift)
-          node (aget array idx)]
+          ^INode node (aget array idx)]
       (if (nil? node)
         not-found
-        (find-node
+        (.findNode
           node
           (+ shift 5)
           hash
           key
           not-found))))
 
-  (node-seq [this]
-    (array-node-seq-create array))
+  (nodeSeq [this]
+    (array-nodeSeq-create array))
 
-  (node-iterator [this f]
+  (nodeIterator [this f]
     (array-node-iter-ctor array f))
 
-  (kvreduce-node [this f init]
+  (kvreduceNode [this f init]
+    ;;TODO fuse?
     (run! identity
-          (map (fn [node]
+          (map (fn [^INode node]
                  (when node
-                   (let [init (kvreduce-node
+                   (let [init (.kvreduceNode
                                 node f init)]
                      (when (reduced? init)
                        init))))
                array))
     init)
 
-  (fold-node [this 
+  (foldNode [this 
               combinef reducef fjtask fjfork fjjoin]
     (let [tasks
           (filterv
-            (fn [node]
+            (fn [^INode node]
               (when node
                 (fn []
-                  (fold-node
+                  (.foldNode
                     node
                     combinef reducef fjtask fjfork fjjoin))
                   ))
@@ -1261,29 +1261,29 @@
           combinef reducef fjtask fjfork fjjoin)))
 
   EnsureEditable
-  (ensure-editable [^ArrayNode this edit]
+  (ensureEditable [^ArrayNode this edit]
     (if (identical? (.-edit this) edit)
       this
       (array-node-ctor
         edit count (aclone ^objects (.-array this)))))
 
   EditAndSet
-  (edit-and-set [this edit i n]
+  (editAndSet [this edit i n]
     (let [^ArrayNode
-          editable (ensure-editable this edit)
+          editable (.ensureEditable this edit)
           _ (aset ^objects (.-array editable) i n)]
       editable))
 
-  (assoc-node [this edit shift hash key val added-leaf]
+  (assocNode [this edit shift hash key val added-leaf]
     (let [idx (mask hash shift)
           ^INode
           node (aget array idx)]
       (cond
         (nil? node)
         (let [^ArrayNode
-              editable (edit-and-set
+              editable (.editAndSet
                          this edit idx
-                         (assoc-node
+                         (.assocNode
                            EMPTY-BMIN
                            edit
                            (+ shift 5)
@@ -1296,7 +1296,7 @@
           editable)
 
         :else
-        (let [n (assoc-node
+        (let [n (.assocNode
                   node
                   edit
                   (+ shift 5)
@@ -1306,18 +1306,18 @@
                   added-leaf)]
           (if (identical? n node)
             this
-            (edit-and-set
+            (.editAndSet
               this
               edit
               idx
               n))))))
 
-  (without-node [this edit shift hash key removed-leaf]
+  (withoutNode [this edit shift hash key removed-leaf]
     (let [idx (mask hash shift)
-          node (aget array idx)]
+          ^INode node (aget array idx)]
       (if (nil? node)
         this
-        (let [n (without-node
+        (let [n (.withoutNode
                   node
                   edit
                   (+ shift 5)
@@ -1332,7 +1332,7 @@
             (if (<= count 8) ;; shrink
               (pack array count edit idx)
               (let [^ArrayNode
-                    editable (edit-and-set
+                    editable (.editAndSet
                                this
                                edit
                                idx
@@ -1342,33 +1342,33 @@
                 editable))
 
             :else
-            (edit-and-set this edit idx n))))))
+            (.editAndSet this edit idx n))))))
   )
 
-(declare array-node-seq-create)
+(declare array-nodeSeq-create)
 
-(defn array-node-seq-ctor [meta nodes i s]
+(defn array-nodeSeq-ctor [meta nodes i s]
   (proxy [clojure.lang.ASeq] [meta]
     (withMeta [meta]
-      (array-node-seq-ctor
+      (array-nodeSeq-ctor
         meta nodes i s))
     (first []
       (first s))
     (next []
-      (array-node-seq-create nil nodes i (next s)))))
+      (array-nodeSeq-create nil nodes i (next s)))))
 
-(defn array-node-seq-create 
-  ([nodes] (array-node-seq-create
+(defn array-nodeSeq-create 
+  ([nodes] (array-nodeSeq-create
              nil nodes 0 nil))
   ([meta ^objects nodes i s]
    (if s
-     (array-node-seq-ctor meta nodes i s)
+     (array-nodeSeq-ctor meta nodes i s)
      (loop [j i]
        (when (< j (alength nodes)) 
          (cond
            (aget nodes j)
-           (if-let [ns (node-seq (aget nodes j))]
-             (array-node-seq-create meta nodes (inc j) ns)
+           (if-let [ns (.nodeSeq ^INode (aget nodes j))]
+             (array-nodeSeq-create meta nodes (inc j) ns)
              (recur (inc j)))
 
            :else (recur (inc j))))))))
@@ -1378,8 +1378,8 @@
 
 (defonce NULL (Object.))
 
-(defprotocol INodeIter
-  (advance [this]))
+(definterface INodeIter
+  (advance []))
 
 (deftype NodeIter [^objects array
                    f
@@ -1403,8 +1403,8 @@
 
             (some? node-or-val)
             (let [^java.util.Iterator
-                  iter (node-iterator
-                         node-or-val f)]
+                  iter (.nodeIterator
+                         ^INode node-or-val f)]
               (if (and (some? iter)
                        (.hasNext iter))
                 (do (set! (.next-iter this) iter)
@@ -1420,7 +1420,7 @@
                              NULL))
             (some? next-iter))
       true
-      (advance this)))
+      (.advance this)))
 
   (next [this]
     (let [ret next-entry]
@@ -1437,7 +1437,7 @@
               ]
           ret)
 
-        (advance this)
+        (.advance this)
         (.next this)
 
         :else
@@ -1464,10 +1464,9 @@
         (if (boolean? res)
           res
           (if (< i (alength array))
-            (let [^clojure.lang.IMapIterable
-                  node (aget array (inc i))]
+            (let [^INode node (aget array (inc i))]
               (when node
-                (set! nested-iter (node-iterator node f)))
+                (set! nested-iter (.nodeIterator node f)))
               (recur))
             false)))))
 
@@ -1503,7 +1502,7 @@
                   fjjoin)
                 (fjjoin forked)))))
 
-(def EMPTY-BMIN
+(def ^INode EMPTY-BMIN
   (bitmap-indexed-node-ctor
     nil
     0
@@ -1514,14 +1513,14 @@
          EMPTY
          transient-hash-map)
 
-(def EMPTY-ITER 
+(def ^java.util.Iterator EMPTY-ITER 
   (reify java.util.Iterator
     (hasNext [this] false)
     (next [this] (throw (java.util.NoSuchElementException.)))))
 
 (deftype PersistentHashMap
   [^int count
-   root
+   ^com.ambrosebs.map.INode root
    has-null
    null-value
    ;; must be fully qualified tag! Compiler.java makes strange assumptions
@@ -1545,11 +1544,11 @@
         (not
           (identical?
             NOT-FOUND
-            (find-node root 
-                   0
-                   (core/hash key)
-                   key
-                   NOT-FOUND)))
+            (.findNode root 
+                        0
+                        (core/hash key)
+                        key
+                        NOT-FOUND)))
         false)))
 
   clojure.lang.Associative
@@ -1559,7 +1558,7 @@
         (MapEntry/create nil null-value)
         nil)
       (if root
-        (find-node root 0 (core/hash key) key)
+        (.findNode root 0 (core/hash key) key)
         nil)))
 
   (assoc [this key val]
@@ -1580,10 +1579,10 @@
         ret
         (let [added-leaf (Box. nil)
               newroot 
-              (assoc-node
+              (.assocNode
                 (if root
                   root
-                  EMPTY-BMIN)
+                  ^INode EMPTY-BMIN)
                 0
                 (core/hash key)
                 key
@@ -1605,11 +1604,11 @@
         null-value
         not-found)
       (if-not (nil? root)
-        (find-node root
-                   0
-                   (core/hash key)
-                   key
-                   not-found)
+        (.findNode root
+                    0
+                    (core/hash key)
+                    key
+                    not-found)
         not-found)))
   (valAt [this key]
     (.valAt this key nil))
@@ -1637,7 +1636,7 @@
       this
 
       :else
-      (let [new-root (without-node root 0 (core/hash key) key)]
+      (let [new-root (.withoutNode root 0 (core/hash key) key)]
         (if (identical? new-root root)
           this
           (hash-map-ctor
@@ -1746,7 +1745,7 @@
         @init
 
         root
-        (let [init (kvreduce-node root f init)]
+        (let [init (.kvreduceNode root f init)]
           (if (reduced? init)
             @init
             init))
@@ -1784,7 +1783,7 @@
     ;(prn "seq of PHM")
     ;(pprint root)
     (let [s (when root
-              (node-seq root))]
+              (.nodeSeq root))]
       (if has-null
         (new clojure.lang.Cons
              (MapEntry/create nil null-value)
@@ -1812,10 +1811,11 @@
 
 
 (defn phm-iterator [^PersistentHashMap m f]
-  (let [^java.util.Iterator
-        root-iter (if (nil? (.-root m))
+  (let [^INode root (.-root m)
+        ^java.util.Iterator
+        root-iter (if (nil? root)
                     EMPTY-ITER
-                    (node-iterator (.-root m) f))]
+                    (.nodeIterator root f))]
     (if (.-has-null m)
       (let [seen (volatile! false)]
         (reify java.util.Iterator
@@ -1858,11 +1858,11 @@
                              (vreset! has-null true))]
                      this)
                    (let [_ (set! (.-val leaf-flag) nil)
-                         old-root (or @root EMPTY-BMIN)
-                         ;_ (prn "before transient assoc-node"
+                         ^INode old-root (or @root EMPTY-BMIN)
+                         ;_ (prn "before transient assocNode"
                          ;       (class old-root))
                          ;_ (ppnode old-root)
-                         n (assoc-node
+                         n (.assocNode
                              old-root
                              edit
                              0
@@ -1870,7 +1870,7 @@
                              key
                              val
                              leaf-flag)
-                         ;_ (prn "after transient assoc-node")
+                         ;_ (prn "after transient assocNode")
                          ;_ (ppnode n)
                          _ (when-not (identical? n @root)
                              (vreset! root n))
@@ -1894,14 +1894,15 @@
 
                    :else
                    (let [_ (set! (.-val leaf-flag) nil)
-                         n (without-node
-                             @root
+                         ^INode root-now @root
+                         n (.withoutNode
+                             root-now
                              edit
                              0
                              (core/hash key)
                              key
                              leaf-flag)
-                         _ (when-not (identical? n @root)
+                         _ (when-not (identical? n root-now)
                              (vreset! root n))
                          _ (when-not (nil? (.-val leaf-flag))
                              (vswap! count dec))]
@@ -1925,10 +1926,10 @@
                    not-found
 
                    :else
-                   (find-node @root 0 (core/hash key) key not-found)))
+                   (let [^INode root-now @root]
+                     (.findNode root-now 0 (core/hash key) key not-found))))
                (doCount []
-                 @count)
-               ]
+                 @count)]
          (proxy [clojure.lang.AFn
                  clojure.lang.ITransientMap] []
            (conj [o]
@@ -1988,7 +1989,7 @@
               (map? mta))
           (integer? count)
           (or (nil? root)
-              (extends? INode (class root)))
+              (instance? INode root))
           (boolean? has-null)]}
    (PersistentHashMap. 
      count root has-null null-value mta
@@ -2053,6 +2054,7 @@
         other)
       persistent!)
 
+    ;;FIXME this is slow, why do this?
     ; @param init {key1,val1,key2,val2,...}
     (instance? (class (object-array 0)) other)
     (let [^objects init other]
