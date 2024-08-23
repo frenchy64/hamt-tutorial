@@ -757,6 +757,10 @@
 
             (= key key-or-null)
             (let [_ (set! (.-val removed-leaf) removed-leaf)]
+              ;; https://clojure.atlassian.net/browse/CLJ-2297?focusedCommentId=13252
+              ;; Note that this patch doesn't have a similar change for the transient overload of `without`;
+              ;; because it relies on a helper method `editAndRemovePair` that correctly handles the empty case, that method doesn't have this bug.
+              ;; - Ben Bader
               ;; TODO: collapse  - rhickey
               (edit-and-remove-pair
                 this edit bit idx))
