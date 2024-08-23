@@ -848,29 +848,17 @@
 
   (find-node [this shift hash key]
     (let [idx (find-index array count key)]
-      (cond
-        (< idx 0)
+      (if (< idx 0)
         nil
-
-        (= key (aget array idx))
         (MapEntry/create (aget array idx)
-                         (aget array (inc idx)))
-
-        :else
-        nil)))
+                         (aget array (inc idx))))))
 
   (find-node [this shift hash key not-found]
     (let [idx (find-index array count key)]
-      (cond
-        (< idx 0)
+      (if (< idx 0)
         not-found
-
-        (= key (aget array idx))
         (MapEntry/create (aget array idx)
-                         (aget array (inc idx)))
-
-        :else
-        not-found)))
+                         (aget array (inc idx))))))
 
   (node-seq [this]
     (node-seq-create array))
