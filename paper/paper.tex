@@ -81,9 +81,10 @@
 \begin{abstract}
 Clojure provides a suite of persistent data structures
 implemented by Hickey based on previous work by Bagwell.
-In this tutorial, we use a ported implementation of
-Hickey's Java implementation to Clojure to learn
-how Hash Array Mapped Tries work.
+This tutorial teaches
+how Hash Array Mapped Tries work
+using a Clojure port of
+Hickey's Java implementation.
 \end{abstract}
 
 % Proposal
@@ -98,9 +99,8 @@ how Hash Array Mapped Tries work.
 
 \section{Introduction}
 
-Hash Array Mapped Tries (HAMT) have rocked the functional programming
-world with a fast, immutable and persistent alternative
-to a hash map.
+Hash Array Mapped Tries (HAMT) provide a key tool for functional programmers
+as fast, immutable, and persistent alternatives to hash maps.
 First described by Bagwell~\cite{bagwell2001ideal},
 they are featured in mainstream functional programming
 languages like Clojure and Scala, and have been ported
@@ -127,15 +127,15 @@ and include persistent vectors, hash maps, and hash sets.
 
 To understand with a hash array mapped trie is, 
 we first give some definitions.
-A \textit{trie} is a way of formatting key/value pairs
+A trie is a way of formatting key/value pairs
 in a tree, where values are leaves and keys are spread
 across the paths to those nodes.
 Key prefixes occur on the shallow levels of the tree,
 and suffixes occur closer to the leaves.
-A \textit{bit trie} assumes the mapping keys are strings
+A bit trie assumes the mapping keys are strings
 of bits. Each level consumes one or more bits to index
 its elements.
-An \textit{Array Mapped Trie}
+An Array Mapped Trie
 maps the bits of array indices as a bit trie.
 
 In this paper, we explore Clojure's persistent hash
@@ -144,9 +144,8 @@ map implementation
 It was implemented by Hickey~\cite{hickey2008clojure}, extending
 Bagwell's original formulation~\cite{bagwell2001ideal}
 to be persistent.
-Persistent data structures use \textit{structural sharing}
-when extending themselves, so Clojure necessarily enforces
-hash maps to be \textit{immutable}.
+Persistent data structures are extended using structural sharing,
+so Clojure necessarily enforces hash maps to be immutable.
 
 %\begin{verbatim}
 %- introduce what clojure is
@@ -168,7 +167,7 @@ hash maps to be \textit{immutable}.
 \paragraph{Contributions}
 
 \begin{enumerate}
-  \item We walkthrough the mechanics behind HAMTs.
+  \item We walk through the mechanics behind HAMTs.
   \item We describe the internals of Clojure's persistent HAMT implementation.
   \item We present a port of Clojure's HAMT from Java to Clojure
     for pedagogical purposes,
@@ -232,7 +231,7 @@ Let's walk through some examples about how HAMTs
 work under different operations.
 
 Firstly, a HAMT represents a search tree
-based on the \textit{hash} of its keys.
+based on the hash of its keys.
 Each key is associated with a value.
 Figure \ref{hashes} gives sample 32-bit hashes for six keys,
 which we will use only in this section.
@@ -245,7 +244,7 @@ Since the tree is empty, we create the
 first (root) level, level 0. This corresponds
 to the first 5 bits of the hash. The maximum
 branching factor is $2^5=32$, but since we
-only need one entry, we create a \textit{resizable}
+only need one entry, we create a resizable
 root node.
 
 A resizable node of current capacity $n$ entries,
@@ -496,7 +495,7 @@ For example, if we have over 16 entries, which
 would require copying arrays over length 32, we could
 instead once-and-for-all allocate a length 32
 array where each member is a subtrie
-(without a $\times$ flag)---we call this a \textit{full}
+(without a $\times$ flag)---we call this a full
 node.
 
 This removes the need to bitmap bits---the
@@ -504,7 +503,7 @@ This removes the need to bitmap bits---the
 
 \paragraph{Hash collision nodes}
 If two different keys hash to the same value,
-we use a \textit{hash collision node}
+we use a hash collision node
 to differentiate them. One approach
 is to default to a linear search---with
 the assumption that the hash function
@@ -617,9 +616,8 @@ int bitpos(int hash, int shift) {
 %TODO example
 
 The return value can then 
-be used bit \textit{and}ed
-with the bitmap to return the value of the
-desired bit in the bitmap.
+be used, combined with the bitmap using bitwise AND,
+to return the value of the desired bit in the bitmap.
 
 \paragraph{Array indexing}
 
@@ -633,7 +631,7 @@ and require further bit manipulations.
 To retrieve the next array index, we count the number of 1's
 below the given bit in the bitmap (assuming the given
 bit is set to 1).
-This number $i$ is the number of nodes \textit{before}
+This number $i$ is the number of nodes before
 the node of interest---thus indexes $2i$ and $2i+1$
 contain the key and value of interest.
 To demonstrate this, say we have a bitmap
@@ -733,8 +731,8 @@ bits in the bitmap.
 For example, if bitmap was \texttt{1000}---that
 is, isolating the 4th bit---decrementing it results 
 in \texttt{0111}.
-Bit \textit{and}ing \texttt{0111}
-with bitmap then isolates the 1st-3rd bits, which
+Combining \texttt{0111}
+and the bitmap with bitwise AND then isolates the 1st-3rd bits, which
 we can then use to count the number of 1's
 below \texttt{bit} in \texttt{bitmap}.
 
@@ -1054,7 +1052,7 @@ This paper is dedicated to the memory of Phil Bagwell.
 \label{jvm-bit-remark}
 
 Clojure's implementation of HAMT is implemented on the JVM,
-which only has signed 32-bit integers.
+where 32-bit integers are signed.
 The HAMT implementation, however, treats hashes as
 arbitrary strings of 32-bits, so we need to emulate
 unsigned arithmetic operations.
@@ -1092,8 +1090,8 @@ bit, while \texttt{>>>} replaces it with 0.
 1000 1101 >>> 1 = 0100 0110    //unsigned
 \end{verbatim}
 %
-We always want \textit{unsigned} bit operations, because no bits
-are special in a hash, or in a bitmap.
+Unsigned bit operations are necessary because no bits
+are special in hashes and bitmaps.
 
 \section{Hashes for examples}
 \label{hash-examples}
