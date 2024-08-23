@@ -158,7 +158,23 @@ A level 2 node is used to disambiguate them at hash bits
 
 ## License
 
+The port of PersistentHashMap has the following license:
+
+```
+Copyright (c) Rich Hickey. All rights reserved.
+The use and distribution terms for this software are covered by the
+Eclipse Public License 1.0 (http://opensource.org/licenses/eclipse-1.0.php)
+which can be found in the file epl-v10.html at the root of this distribution.
+By using this software in any fashion, you are agreeing to be bound by
+the terms of this license.
+You must not remove this notice, or any other, from this software.
+```
+
+Everything else is:
+
+```
 Copyright © 2016-2024 Ambrose Bonnaire-Sergeant
 
 Distributed under the Eclipse Public License either version 1.0 or (at
 your option) any later version.
+```
