@@ -45,56 +45,58 @@
 (definterface INode
   (assocNode
     ^com.ambrosebs.map.INode 
-    [shift ;int
-     hash ;int
+    [^int shift
+     ^int hash
      key
      val
      ;; set to the node if this assoc adds an extra leaf
-     added-leaf ;Box
+     ^clojure.lang.Box added-leaf
      ])
   (assocNode
     ^com.ambrosebs.map.INode
-    [edit ;AtomicReference
-     shift ;int
-     hash ;int
+    [^java.util.concurrent.atomic.AtomicReference edit
+     ^int shift
+     ^int hash
      key
      val
-     added-leaf ;Box
+     ^clojure.lang.Box added-leaf
      ])
   (withoutNode
-    [shift ;int
-     hash ;int
+    ^com.ambrosebs.map.INode
+    [^int shift
+     ^int hash
      key])
   (withoutNode
-    [edit ;AtomicReference 
-     shift ;int
-     hash  ;int
+    ^com.ambrosebs.map.INode
+    [^java.util.concurrent.atomic.AtomicReference edit
+     ^int shift
+     ^int hash
      key
-     removed-leaf ;Box
-     ])
+     ^clojure.lang.Box removed-leaf])
   (findNode
-    [shift ;int
-     hash  ;int
+    ^clojure.lang.IMapEntry
+    [^int shift
+     ^int hash
      key])
   (findNode
-    [shift ;int
-     hash  ;int
+    [^int shift
+     ^int hash
      key
      not-found])
-  (;ISeq
+  (^clojure.lang.ISeq
    nodeSeq [])
   (kvreduceNode
-    [f ;IFn
+    [^clojure.lang.IFn f
      init])
   (foldNode
-    [combinef ;IFn
-     reducef  ;IFn
-     fjtask   ;IFn
-     fjfork   ;IFn
-     fjjoin]) ;IFn
+    [^clojure.lang.IFn combinef
+     ^clojure.lang.IFn reducef
+     ^clojure.lang.IFn fjtask
+     ^clojure.lang.IFn fjfork
+     ^clojure.lang.IFn fjjoin])
   (^java.util.Iterator 
     nodeIterator
-    [f])) ;IFn
+    [^clojure.lang.IFn f]))
 
 (definterface EnsureEditable
   (ensureEditable [edit])
@@ -1139,7 +1141,9 @@
          array-nodeSeq-create
          fold-tasks)
 
-(deftype ArrayNode [count ^objects array edit]
+(deftype ArrayNode [^int count
+                    ^objects array
+                    ^AtomicReference edit]
   INode
   (assocNode [this shift hash key val added-leaf]
     ;(prn "ArrayNode assocNode")
@@ -1373,13 +1377,15 @@
 
            :else (recur (inc j))))))))
 
-(defn array-node-ctor [edit count array]
+(defn array-node-ctor [edit 
+                       ;^int
+                       count array]
   (new ArrayNode count array edit))
 
 (defonce NULL (Object.))
 
 (definterface INodeIter
-  (advance []))
+  (advance ^boolean []))
 
 (deftype NodeIter [^objects array
                    f
