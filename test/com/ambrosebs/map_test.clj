@@ -5,4 +5,4 @@
             [com.ambrosebs.map :as map]))
 
 (deftest a-test
-  (is (assert-map-like (map/create {}) gen/int gen/int)))
+  (is (assert-map-like 20 (map/create {}) gen/int gen/int)))
