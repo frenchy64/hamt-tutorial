@@ -45,4 +45,3 @@
     (set-macro-character \{ original-curly-paren-pattern)
     (alter-var-root #'core/hash-map (constantly original-hash-map))
     nil))
-
