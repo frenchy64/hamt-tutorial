@@ -385,15 +385,16 @@
                     idx))))
 
             (= key key-or-null)
-            ;; TODO: collapse  - rhickey
-            (bitmap-indexed-node-ctor
+            (if (identical? bitmap bit)
               nil
-              (bit-xor
-                bitmap
-                bit)
-              (remove-pair
-                array
-                idx))
+              (bitmap-indexed-node-ctor
+                nil
+                (bit-xor
+                  bitmap
+                  bit)
+                (remove-pair
+                  array
+                  idx)))
 
             :else this)))))
     (find-node 
