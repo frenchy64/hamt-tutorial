@@ -36,7 +36,9 @@
       c2
       (list 'if c1
             c2
-            (cons `cond (next (next clauses)))))))
+            (let [nnclauses (next (next clauses))]
+              (assert nnclauses "Final clause must be keyword test")
+              (cons `cond nnclauses))))))
 
 
 (defonce ^:private NOT-FOUND
