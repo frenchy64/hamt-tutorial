@@ -110,6 +110,7 @@
   (editAndRemovePair [edit bit i]))
 
 (defn bit-index [bitmap bit]
+  #_
   {:pre [(int bitmap)
          (int bit)]}
   ;; count all bits below the most
@@ -128,6 +129,7 @@
 
 
 (defn bitpos [hash shift]
+  #_
   {:pre [(number? hash)
          (number? shift)]}
   (bit-shift-left 1 (mask hash shift)))
@@ -229,6 +231,7 @@
   INode
   (assocNode
     [this shift hash key val added-leaf]
+    #_
     {:pre [(number? shift)
            (number? hash)]}
     #_
@@ -551,9 +554,11 @@
         editable)))
 
   (assocNode [this edit shift hash key val added-leaf]
+             #_
     {:pre [(number? shift)
            (number? hash)
            (instance? Box added-leaf)]}
+    #_
     (assert (= hash (core/hash key)))
     #_
     (prn "BitmapIndexedNode assocNode, with edit" 
@@ -1010,6 +1015,7 @@
 (defn nodeSeq-ctor 
   ([array i] (nodeSeq-ctor nil array i nil))
   ([meta ^objects array i s]
+   #_
    {:pre [(or (nil? meta)
               (map? meta))
           (integer? i)
@@ -1033,9 +1039,11 @@
 (defn nodeSeq-create 
   ([array] (nodeSeq-create array 0 nil))
   ([^objects array i s]
+   #_
    {:pre [(integer? i)
           (or (nil? s)
               (seq? s))]}
+   #_
    (assert
      (every? (fn [[k v]]
                (if (nil? k)
@@ -1080,6 +1088,7 @@
 
 (defn hash-collision-node-ctor
   [edit hash count array]
+  #_
   (assert (= (class array)
              (class (object-array 0))))
   ;(prn "hash-collision-node-ctor")
@@ -1094,6 +1103,7 @@
 
 (defn ^BitmapIndexedNode bitmap-indexed-node-ctor
   [edit bitmap array]
+  #_
   {:pre [(or (nil? edit)
              (instance? AtomicReference edit))
          (integer? bitmap)
@@ -1991,6 +2001,7 @@
   ([count root has-null null-value]
    (hash-map-ctor nil count root has-null null-value))
   ([mta count root has-null null-value]
+   #_
    {:pre [(or (nil? mta)
               (map? mta))
           (integer? count)
