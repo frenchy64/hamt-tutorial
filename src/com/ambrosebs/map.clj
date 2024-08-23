@@ -22,6 +22,9 @@
 (defmacro bit-shift-left [x n]
   `(clojure.lang.Numbers/shiftLeftInt ~x ~n))
 
+(defmacro identical-ints? [x y]
+  `(com.ambrosebs.map.Util/identicalInts ~x ~y))
+
 (defonce ^:private NOT-FOUND
   (Object.))
 
@@ -161,7 +164,7 @@
   ([shift key1 val1 key2hash key2 val2]
    (let [key1hash (core/hash key1)]
      (cond
-       (== key1hash key2hash)
+       (identical-ints? key1hash key2hash)
        (hash-collision-node-ctor
          nil
          key1hash
@@ -371,7 +374,7 @@
                     (inc (* 2 idx))
                     n))
 
-                (== bitmap bit)
+                (identical-ints? bitmap bit)
                 nil
 
                 :else
@@ -385,7 +388,7 @@
                     idx))))
 
             (= key key-or-null)
-            (if (== bitmap bit)
+            (if (identical-ints? bitmap bit)
               nil
               (bitmap-indexed-node-ctor
                 nil
@@ -507,7 +510,7 @@
 
   EditAndRemovePair
   (edit-and-remove-pair [this edit bit i]
-    (if (== bitmap bit)
+    (if (identical-ints? bitmap bit)
       nil
       (let [^BitmapIndexedNode editable
             (ensure-editable this edit)
@@ -745,7 +748,7 @@
                   (inc (* 2 idx))
                   n)
 
-                (== bitmap bit)
+                (identical-ints? bitmap bit)
                 nil
 
                 :else
@@ -793,10 +796,10 @@
     [this shift hash key val added-leaf]
     (let [^Box added-leaf added-leaf]
       ;(prn "HashCollisionNode assoc-node")
-      (if (== hash (.-hash this))
+      (if (identical-ints? hash (.-hash this))
         (let [idx (find-index array count key)]
           (cond
-            (not= -1 idx)
+            (not (identical-ints? -1 idx))
             (if (identical? val (aget array (inc idx)))
               this
               (hash-collision-node-ctor
@@ -836,10 +839,10 @@
   (without-node [this shift hash key]
     (let [idx (find-index array count key)]
       (cond
-        (== -1 idx)
+        (identical-ints? -1 idx)
         this
 
-        (== 1 count)
+        (identical-ints? 1 count)
         nil
 
         :else
@@ -914,10 +917,10 @@
 
   (assoc-node [this edit shift hash key val added-leaf]
     (let [^Box added-leaf added-leaf]
-      (if (== hash (.-hash this))
+      (if (identical-ints? hash (.-hash this))
         (let [idx (find-index array count key)]
           (cond
-            (not (== idx -1))
+            (not (identical-ints? idx -1))
             (if (identical? (aget array (inc idx))
                             val)
               this
@@ -966,10 +969,10 @@
   (without-node [this edit shift hash key removed-leaf]
     (let [^Box removed-leaf removed-leaf
           idx (find-index array count key)]
-      (if (== -1 idx)
+      (if (identical-ints? -1 idx)
         this
         (let [_ (set! (.-val removed-leaf) removed-leaf)]
-          (if (== 1 count)
+          (if (identical-ints? 1 count)
             nil
             (let [^HashCollisionNode
                   editable
@@ -1467,7 +1470,7 @@
     (empty? tasks)
     (combinef)
 
-    (== 1 (count tasks))
+    (identical-ints? 1 (count tasks))
     ((nth tasks 0))
 
     :else
