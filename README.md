@@ -72,8 +72,10 @@ The `com.ambrosebs.map` namespace also comes with visualization capabilities.
 It uses [rhizome](https://github.com/ztellman/rhizome) to create a new
 window with the summarized HAMT.
 
-```
-user=> (hamt/visualize (hamt/hash-map 1 2))
+```clojure
+user=> (require '[com.ambrosebs.map.visualize :as viz])
+nil
+user=> (viz/visualize (hamt/hash-map 1 2))
 nil
 ```
 
@@ -107,7 +109,7 @@ then use a terminal command to output a scaled `png`.
 
 ```clojure
 ;; write HAMT to example.dot
-user=> (hamt/dot-to-disk 
+user=> (viz/dot-to-disk 
          (hamt/hash-map :a 1 :b 2 :c 3 :d 4 :e 5 
                         :f 6 :g 7 :h 8 :i 9 :j 10) 
          "example")
