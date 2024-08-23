@@ -1024,8 +1024,10 @@
           (or (nil? s)
               (seq? s))]}
    (proxy [clojure.lang.ASeq] [meta]
-     (withMeta [meta]
-       (nodeSeq-ctor meta array i s))
+     (withMeta [new-meta]
+       (if (identical? meta new-meta)
+         this
+         (nodeSeq-ctor new-meta array i s)))
      (first []
        ;(pprint array)
        ;(prn i)
@@ -1365,9 +1367,11 @@
 
 (defn array-nodeSeq-ctor [meta nodes i s]
   (proxy [clojure.lang.ASeq] [meta]
-    (withMeta [meta]
-      (array-nodeSeq-ctor
-        meta nodes i s))
+    (withMeta [new-meta]
+      (if (identical? new-meta meta)
+        this
+        (array-nodeSeq-ctor
+          meta nodes i s)))
     (first []
       (first s))
     (next []
@@ -1814,12 +1818,14 @@
 
   clojure.lang.IObj
   (withMeta [this meta]
-    (hash-map-ctor
-      meta
-      count
-      root
-      has-null
-      null-value))
+    (if (identical? _meta meta)
+      this
+      (hash-map-ctor
+        meta
+        count
+        root
+        has-null
+        null-value)))
 
   clojure.lang.IEditableCollection
   (asTransient [this]
