@@ -33,11 +33,11 @@ To use, first [install Leiningen](http://leiningen.org/#install).
 Start a REPL in the top-level directory of this repository.
 
 ```clojure
-ambrose@ambrose-VirtualBox:~/Projects/B503/term-project$ lein repl
-nREPL server started on port 41576 on host 127.0.0.1 - nrepl://127.0.0.1:41576
-REPL-y 0.3.7, nREPL 0.2.12
-Clojure 1.9.0-alpha13
-Java HotSpot(TM) 64-Bit Server VM 1.8.0_101-b13
+$ lein repl
+nREPL server started on port 49771 on host 127.0.0.1 - nrepl://127.0.0.1:49771
+REPL-y 0.5.1, nREPL 0.8.3
+Clojure 1.11.3
+OpenJDK 64-Bit Server VM 21.0.1+12-LTS
     Docs: (doc function-name-here)
           (find-doc "part-of-name-here")
   Source: (source function-name-here)
@@ -47,7 +47,6 @@ Java HotSpot(TM) 64-Bit Server VM 1.8.0_101-b13
 
 user=> (require '[com.ambrosebs.map :as hamt])
 nil
-user=> 
 ```
 
 The function `hamt/hash-map` then creates a new HAMT
