@@ -2,26 +2,17 @@
   <img src="tree.png" width="1000"/>
 </p>
 
-## Hash Array Mapped Tries
+## An Interactive Tutorial on Hash Array Mapped Tries
 
 This library contains: 
 
 - a [reimplementation](#persistenthashmap-port) of Clojure's PersistentHashMap in Clojure
 - [visualization tools](#visualizing-hamts) for the underlying trie.
-- a [draft paper](#paper) that gives a from-scratch tutorial
-  on hash array mapped tries.
-- a [prototype](#keyword-map-optimizations) for dynamically generated `defrecord`s
-  based on runtime key frequency.
-
-It was completed as part of the B503 Algorithms graduate course
-at Indiana University Bloomington (Fall 2016).
-It was also just a great excuse to learn all this stuff.
+- a [tutorial paper](#paper) on hash array mapped tries.
 
 ## Paper
 
-The accompanying [paper](paper/paper.pdf) gives a tutorial on HAMT's,
-and outlines other details are required by my course which are less
-useful for the casual reader.
+The accompanying [paper](paper/paper.pdf) gives a tutorial on HAMT's.
 
 ## PersistentHashMap port
 
@@ -164,146 +155,6 @@ happen in lower levels, like `:f` and `:d`, who share
 the same first 10 bits in their hashes.
 A level 2 node is used to disambiguate them at hash bits
 10-14.
-
-## Keyword map optimizations
-
-I experimented with a cool little idea: generating `defrecord`s
-at runtime.
-The finished product wasn't too successful, but there seems
-to be more to be said in this area.
-
-A prototype is implemented in `com.ambrosebs.fast-attr`.
-It is not a complete map implementation, but enough to run
-a couple of benchmarks.
-
-There are two main classes: 
-
-- `UncachedMap`: a wrapper for `PersistentHashMap` that
-  also remembers the keyword keys. If a specialized
-  map for the current keyword keys set exists, then
-  it is coerces into a `CachedMap*`  on the next `assoc`
-  operation.
-- `CachedMap*`: a family of record-like datatypes that
-  offer a fast lookup on a fixed set of keys like `defrecord`.
-  We compile many different variants for each common
-  keyset (eg. `CachedMap1`, `CachedMap542`).
-  On `assoc`, if there is a specialized `CachedMap*` available,
-  it coerces to it, otherwise it defaults back to an 
-  `UncachedMap`.
-
-A separate thread performs the actual compilation, to avoid
-too much overhead during `assoc`. 
-(Below)
-
-```clojure
-(let [actually-me current-thread]
-  (.start 
-    (Thread.
-      (fn []
-        (loop []
-          (Thread/sleep 100)
-          ;; kill the thread if we recompile
-          (when (= actually-me current-thread)
-            (doseq [[k v] @keys-frequencies]
-              (when (< gen-threshold v)
-                (generate-fast-kw-map k)))
-            (recur)))))))
-```
-
-Map `assoc` operations simply write to `keys-frequencies`,
-incrementing a counter for the frequency of a given keyset.
-If a keyset occurs more than `gen-threshold` times (set to 16),
-a specialized `CachedMap*` is generated for the current keyset.
-
-Since the optimizations happen on an `assoc` operation, a little
-benchmark to show off the implementation is given that performs
-20 assoc operations, with 100,000 lookups between each assoc.
-(Below)
-
-```clojure
-(defn exercise-bench [f n]
-  (loop [i 20
-         m (f (into {:a 1 :b 2 :c 3 :d 4
-                     :e 5 :f 6 :g 7 :h 8}
-                    (map #(vector % %) (range n))))]
-    (when-not (zero? i)
-      (dotimes [_ 100000] 
-        (+ (:a m) (:b m) (:c m) (:d m)
-           (:e m) (:f m) (:g m) (:h m)))
-      (recur (dec i) (update m :a inc)))))
-```
-
-The benchmark always runs with a fixed map 
-`{:a 1 :b 2 :c 3 :d 4 :e 5 :f 6 :g 7 :h 8}`.
-The `n` parameter with generate `n` extra entries,
-designed to fill up the HAMT to show better performance
-in the specialized versions.
-
-We first test with zero extra keys.
-For plain maps:
-
-```clojure
-user=> (time (fast/exercise-bench #(into {} %) 0))
-"Elapsed time: 918.679767 msecs"
-nil
-```
-
-For hand rolled `defrecords`:
-
-```clojure
-user=> (defrecord Exercise [a b c d e f g h])
-user.Exercise
-user=> (time (fast/exercise-bench map->Exercise 0))
-"Elapsed time: 788.005321 msecs"
-nil
-```
-
-For optimized maps:
-
-```clojure
-user=> (time (fast/exercise-bench fast/uncached-1arg 0))
-"use optimised map"
-"Elapsed time: 901.342483 msecs"
-nil
-user=> (time (fast/exercise-bench fast/uncached-1arg 0))
-"use optimised map"
-"Elapsed time: 785.89559 msecs"
-```
-
-The optimization takes a while to kick in, but seem to
-show similar speedups as records.
-
-For 1,000 extra keys, things are still looking ok for the
-optimized map, which keeps up with records.
-
-```clojure
-user=> (time (fast/exercise-bench #(into {} %) 1000))
-"Elapsed time: 1375.165084 msecs"
-nil
-user=> (time (fast/exercise-bench map->Exercise 1000))
-"Elapsed time: 766.720069 msecs"
-nil
-user=> (time (fast/exercise-bench fast/uncached-1arg 1000))
-"use optimised map"
-"Elapsed time: 773.391029 msecs"
-nil
-user=> 
-```
-
-## Future work
-
-It would be nice if the HAMT implementation in `com.ambrosebs.map`
-could be swapped in as the default persistent map implementation
-in Clojure. There is some preliminary work in `com.ambrosebs.map/install-map`,
-but there's some stuff hardcoded in Compiler.java which is getting
-in the way.
-
-Then, transferring optimizations such as the one I experimented with
-into a full implementation like `com.ambrosebs.map.PersistentHashMap`
-would allow us to test on large programs that extensively
-use plain maps as records (eg. tools.analyzer).
-
-Enjoy!
 
 ## License
 

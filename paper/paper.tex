@@ -69,32 +69,21 @@
 %\publicationrights{author-pays}
 
 \authorinfo{ Ambrose Bonnaire-Sergeant}
-           { Indiana University Bloomington }
-           { abonnair@indiana.edu}
+           { ambrose@ambrosebs.com }
 
 %\titlebanner{banner above paper title}        % These are ignored unless
 %\preprintfooter{short description of paper}   % 'preprint' option specified.
 
-\title{Towards Optimized Keyword Hash Maps for Clojure}
+\title{An Interactive Tutorial on Hash Array Mapped Tries}
 
 \maketitle
 
 \begin{abstract}
 Clojure provides a suite of persistent data structures
 implemented by Hickey based on previous work by Bagwell.
-There are several implementations of persistent hash maps
-included in Clojure and provided by open source source libraries
-(like data.int-map), however there is no specific
-implementation for the most common case of hash map:
-relatively small hash maps (less than 32 entries)
-consisting of keyword keys.
-Keywords are effectively interned strings that are designed
-to be keys in maps.
-This paper presents how the current implementations
-of hash maps handle keyword usage, 
-and present several experiments of specialized hash maps
-handling just keyword keys.
-
+In this tutorial, we use a ported implementation of
+Hickey's Java implementation to Clojure to learn
+how Hash Array Mapped Tries work.
 \end{abstract}
 
 % Proposal
@@ -177,17 +166,14 @@ hash maps to be \textit{immutable}.
 %\end{verbatim}
 
 \paragraph{Contributions}
-This paper offers several contributions.
 
 \begin{enumerate}
-  \item We give an approachable walkthrough of mechanics behinds
-      HAMTs.
-  \item We describe the internals of Clojure's persistent HAMT implementation,
-    via our pure-Clojure reimplementation.
+  \item We walkthrough the mechanics behind HAMTs.
+  \item We describe the internals of Clojure's persistent HAMT implementation.
   \item We present a port of Clojure's HAMT from Java to Clojure
     for pedagogical purposes,
     featuring trie visualization (Figure~\label{port-visualize}).
-  \item We evaluate a Clojure-specific optimization for Clojure's HAMT.
+  %\item We evaluate a Clojure-specific optimization for Clojure's HAMT.
   %\item We speculate on future directions for HAMT's.
 \end{enumerate}
 
@@ -562,7 +548,6 @@ first 5 bits of the result
 interpreted as an integer
 (Appendix~\ref{jvm-bit-remark} explains \texttt{>>>}).
 
-
 \begin{verbatim}
 // returns integer between 0 and 31
 int mask(int hash, int shift) {
@@ -753,6 +738,16 @@ with bitmap then isolates the 1st-3rd bits, which
 we can then use to count the number of 1's
 below \texttt{bit} in \texttt{bitmap}.
 
+\begin{figure*}
+\includegraphics[width=18cm]{big-tree}
+\caption{
+Visualization of
+\texttt{\{:a 1 :b 2 :c 3 :d 4 :e 5 :f 6 :g 7 :h 8 :i 9 :j 10\}},
+hashes in Appendix~\ref{hash-examples}.
+}
+\label{big-trie-vis}
+\end{figure*}
+
 \subsection{Memory layout}
 
 The HAMT data structure has a very compact representation
@@ -915,8 +910,7 @@ is no longer needed.
 
 \subsection{Search}
 
-Search is straightforward, and works as described
-in Section~\ref{walkthrough}.
+Search is straightforward and similar to Section~\ref{walkthrough}.
 
 \subsection{Insertion}
 
@@ -1029,235 +1023,12 @@ via \texttt{rhizome}
 See Figure~\ref{big-trie-vis} for an example
 for a representative trie.
 
-\section{Experiments}
-\label{experiments}
-
-We prototyped an optimization based on
-\empty{just-in-time compilation} techniques.
-Leveraging Clojure's \texttt{case} statement,
-we created specialized hash array mapped tries
-for specific keysets.
-We decide which keysets based on runtime frequency.
-
-Maps with keyword keys are very common in Clojure.
-A type system for Clojure has special support
-for such maps~\cite{bonnaire2016practical}
-and the \texttt{clojure.spec} library\footnote{\url{http://clojure.org/guides/spec}}
-has exposes special primitives to generate and verify
-such maps.
-
-%\begin{figure}
-%\begin{verbatim}
-%(assoc [this key val]
-%  (cond
-%    (keyword? key)
-%    (case key
-%      ...   ;; specific branches for each key
-%      ;; default case
-%      )
-%
-%    :else
-%\end{verbatim}
-%\caption{Pseudocode for \texttt{assoc} in optimized maps}
-%\end{figure}
-%
-%\begin{figure}
-%\begin{verbatim}
-%(get [this key]
-%  (cond
-%    (keyword? key)
-%    (case key
-%      ...   ;; specific branches for each key
-%      ;; default case
-%      )
-%
-%    :else
-%\end{verbatim}
-%\caption{Pseudocode for \texttt{get} in optimized maps}
-%\end{figure}
-
-\begin{figure*}
-\includegraphics[width=18cm]{big-tree}
-\caption{
-Trie visualization in Clojure port, for map
-\texttt{\{:a 1 :b 2 :c 3 :d 4 :e 5 :f 6 :g 7 :h 8 :i 9 :j 10\}}
-(See Appendix~\ref{hash-examples} for corresponding hashes).
-}
-\label{big-trie-vis}
-\end{figure*}
-
-\begin{figure}
-  \begin{tikzpicture}
-    \begin{axis}[
-      legend pos=north west,
-      xlabel=Number of Extra keys,
-      ylabel=Time (msec)]
-      \addplot+[sharp plot] coordinates
-      {(0,837.900884) (100,1435.768863) (200,1447.167303) (300,1505.881845) (400,1331.124945) 
-        (500,1759.42348 8) (600,1387.997231) (700,1729.756068) (800,1784.948714) (900,1481.740526) 
-        (1000,1521.329677) (1100,1855.281003) (1200,2573.8774) (1300,2049.42444) (1400,1817.21074) 
-        (1500,2023.47916) (1600,1936.875666) (1700,2129.781288) (1800,1757.819692) (1900,2973.424349)};
-      \addlegendentry{Plain map}
-      \addplot+[sharp plot] coordinates
-{
-(0,840.862397) (100,894.77844) (200,921.830137) (300,904.195596) (400,868.788413) 
-(500,849.688625) (600,857.498675) (700,884.393927) (800,1099.811693) (900,936.40417) 
-(1000,1079.314484) (1100,1598.098832) (1200,1334.392182) (1300,1212.918047) (1400,1047.268085) 
-(1500,1110.733413) (1600,1232.646281) (1700,1181.103518) (1800,1400.642201) (1900,2108.923538)
-};
-      \addlegendentry{Record}
-      \addplot+[sharp plot] coordinates
-{
-(0,892.363186) (100,972.581187) (200,921.286823) (300,944.139623) (400,850.684909) 
-(500,907.794038) (600,835.013332) (700,841.138563) (800,938.415172) (900,960.614487)
- (1000,904.91121) (1100,1569.635548) (1200,1294.22056) (1300,1047.200465) (1400,1112.890638)
- (1500,1203.444674) (1600,1261.062708) (1700,2109.647289) (1800,3016.390694) (1900,3844.42986)
-};
-      \addlegendentry{Optimized map}
-    \end{axis}
-  \end{tikzpicture}
-  \caption{Running time for keyword keys benchmark,
-  varying the number of extra entries in the map.}
-  \label{bench-plot}
-\end{figure}
-
-
-\subsection{Approach}
-
-To prototype this approach, we repurposed Clojure's
-\texttt{defrecord} construct, which creates maps
-specialized maps on a known keyset.
-Instead of statically compiling only known keysets,
-our approach effectively compiles records at runtime
-based the most frequent keyword keysets for that
-particular run.
-
-\subsection{Evaluation}
-
-To evaluate our approach, we developed a prototype
-that is a simple wrapper around the existing \texttt{PersistentHashMap}
-class that intercepts operations on keyword keys.
-
-To minimize the overhead of compiling new classes, we
-delegate compilation to a separate thread of execution,
-using shared data to communicate which keysets to 
-specialize.
-
-We tested three kinds of maps in our benchmark.
-
-\paragraph{Plain map}
-This is the Clojure implementation of hash array mapped trie
-described in Section~\ref{clojure-hamt}.
-
-\paragraph{Record}
-This is a map constructed with Clojure's \texttt{defrecord}
-form. It is specialized at compile time for a specific
-known set of keyword entries.
-
-\paragraph{Optimized map}
-This is our prototype implementation that specializes
-maps at runtime.
-
-\begin{figure}
-\begin{verbatim}
-(defn exercise-bench [f n]
-  (loop [i 20
-         m (f (into {:a 1 :b 2 :c 3 :d 4
-                     :e 5 :f 6 :g 7 :h 8}
-                    (map #(vector % %) (range n))))]
-    (when-not (zero? i)
-      (dotimes [_ 100000] 
-        (+ (:a m) (:b m) (:c m) (:d m)
-           (:e m) (:f m) (:g m) (:h m)))
-      (recur (dec i) (update m :a inc)))))
-\end{verbatim}
-\caption{Benchmark code that takes a function $f$
-that returns the kind of map we are currently
-benchmarking (eg., plain, record, or optimized),
-and a number $n$, the number of extra keys to fill
-the map with.
-}
-\label{benchmark-code}
-\end{figure}
-
-Figure~\ref{benchmark-code} contains the benchmark
-code. The purpose of the benchmark is to simulate
-a set of map associations followed by many lookups,
-since our optimization only triggers after an association
-operation.
-In this version of the benchmark, we perform 20
-associations, each with 400,000 lookups
-on keyword entries.
-Each iteration has a set number of keyword entries,
-and we vary the 
-
-\subsection{Results}
-
-Figure~\ref{bench-plot} plots the results.
-The \emph{Record} is hand-optimized for the particular
-keyword entries in the benchmark, and outperforms
-the \emph{Plain map} as expected.
-Our \emph{Optimized map} compiles its own specialized
-map for the set of keywords, and consistently
-beats \emph{Plain map} for 1,500 extra keys and under.
-It also stays competitive with the hand-tuned \emph{Record}
-for 1,500 and under.
-
-After 1,500 keys, there is an unknown problem with our optimized
-implementation. Our hand-written benchmarking scheme
-does not compensate for garbage collection and is rather crude,
-so we would like to revisit this benchmark in the future to 
-investigate this issue.
-
-\subsection{Interpretation}
-
-Our optimization stays mostly competitive with hand-tuned
-records. However, there are no wins in our predicted
-primary use-case: small maps with only keyword keys.
-Our benchmark tested an unusual case: keyword lookups on a
-hybrid keyword and integer keyed map.
-We constructed it like this to ensure our implementation beat
-plain maps in expected cases.
-
-We hope our approach can be improved to cater to our
-original vision of speeding up small keyword maps---our
-initial experiments show no speedup in this case.
-
-%\begin{verbatim}
-%- try associating a number with keywords
-%- try generating defrecord classes for keyword
-%  maps
-%- try splitting keywords and other data into two
-%  trees
-%- combine RB trees/something else with other maps?
-%  - then branch on every `get` if something is a keyword,
-%    use the tree optimised for keywords, otherwise use the
-%    normal thing.
-%- try compiling a `case` statement for all the
-%  keywords
-%  - try doing asynchronously
-%    - then set mutable field to utilize the thunk
-%    - while it's compiling, use a PHM in the mean time
-%- keep a set of the most common clusters of keyword parameters
-%  - a separate thread compiles defrecords for them
-%  - then when these maps are created/assoc'd/dissoc'd,
-%    they can directly use the defrecords
-%\end{verbatim}
-
 \section{Related Work}
 
 Recently, Steindorfer and Vinju~\cite{Steindorfer:2015:OHM:2814270.2814312}
 created Heterogeneous Hash Array Mapped Tries.
 They are interested in creating a product line of HAMT
 implementations~\cite{Steindorfer:2016:TSP:2993236.2993251}.
-
-Our approach to speeding up the hash-map implementation
-is related to \textit{storage strategies}
-by Bolz et. al~\cite{Bolz13storagestrategies}.
-They observe that dynamically typed languages often use
-heterogeneous collections as homogeneous, and present
-optimizations to take advantage of this fact.
-
 
 %\begin{verbatim}
 %- history of persistent data structures
@@ -1270,48 +1041,8 @@ optimizations to take advantage of this fact.
 %- Scala's data structures?
 %\end{verbatim}
 
-\section{Future directions}
-
-In future work, we plan to devise several benchmarks
-that test real-world usages of small keyword maps.
-We will devise several more optimization strategies
-based on the optimization described in Section~\ref{experiments},
-and evaluate them using these new benchmarks.
-
-Furthermore, we plan to override Clojure's default hash map implementation
-in a custom version of Clojure, and run benchmarks
-over entire programs.
-We plan to find programs that extensively use the ``tagged map''
-idiom of using plain maps as records---we conjecture these
-are more likely to see speedups if our optimizations
-satisfy the micro-benchmarks.
-
-\section{Conclusion}
-
-%\begin{verbatim}
-%- summarise the problem
-%- recap the history of Clojure's decisions on data structures
-%- summarise the results of our experiments.
-%- recommendations
-%\end{verbatim}
-
-Clojure has a general purpose hash-map implementation, but
-programmers are encouraged to hash-maps primarily as records,
-which are typically small maps with less than 32 entries
-with only keyword keys.
-
-In this paper, we prototyped an optimization that caters
-to this usecase, by compiling specialized hash-maps
-for specific keyword keysets discovered at runtime.
-Our preliminary investigation found we could duplicate
-performance for hand-tuned records with hybrid keyword and
-integer keyed maps.
-In the future, we plan to investigate optimizations
-and benchmarks that better target small keyword maps.
-
 \section{Dedication}
 This paper is dedicated to the memory of Phil Bagwell.
-Thank you for sharing your gifts.
 
 \printbibliography[title=References]
 
