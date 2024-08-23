@@ -68,7 +68,7 @@ user=> (into (hamt/hash-map) (zipmap (range 16) (range 16)))
 
 ### Visualizing HAMTs
 
-The `com.ambrosebs.map` namespace also comes with visualization capabilities.
+The `com.ambrosebs.map.visualize` namespace can visualize HAMTs.
 It uses [rhizome](https://github.com/ztellman/rhizome) to create a new
 window with the summarized HAMT.
 
