@@ -385,7 +385,7 @@
                     idx))))
 
             (= key key-or-null)
-            (if (identical? bitmap bit)
+            (if (== bitmap bit)
               nil
               (bitmap-indexed-node-ctor
                 nil
